@@ -9,12 +9,14 @@ createApp({
             user: null,
             profilePic: null,
             cards: [],
+            collections: [],
             inventory: [],
             marketplace: [],
             currentView: 'hub',
             activeNav: 'hub',
             albumTitle: '',
-            selectedRegion: '',
+            selectedCollection: '',
+            selectedCollectionForGacha: '77THCC',
             loading: true,
             gachaResult: null,
             selectedCardModal: null,
@@ -68,21 +70,21 @@ createApp({
             this.currentView = view;
             if (view === 'market') this.loadMarketplace();
         },
-        openAlbum(regionKey, title) {
-            this.selectedRegion = regionKey;
+        openAlbum(collectionId, title) {
+            this.selectedCollection = collectionId;
             this.albumTitle = title || 'อัลบั้มการ์ด';
             this.currentView = 'album';
         },
         filteredCards() {
-            if (!this.selectedRegion) return this.cards;
-            return this.cards.filter(c => c.region === this.selectedRegion || c.category === this.selectedRegion);
+            if (!this.selectedCollection) return this.cards;
+            return this.cards.filter(c => c.collection_id === this.selectedCollection);
         },
-        countByRegion(regionKey) {
-            const regionCards = !regionKey 
+        countByCollection(collectionId) {
+            const collectionCards = !collectionId 
                 ? this.cards 
-                : this.cards.filter(c => c.region === regionKey || c.category === regionKey);
-            const owned = regionCards.filter(c => this.hasCard(c.card_id)).length;
-            return `${owned}/${regionCards.length}`;
+                : this.cards.filter(c => c.collection_id === collectionId);
+            const owned = collectionCards.filter(c => this.hasCard(c.card_id)).length;
+            return `${owned}/${collectionCards.length}`;
         },
 
         // Auth
@@ -123,7 +125,15 @@ createApp({
                 return;
             }
 
-            // 1. Fetch Cards
+            // 1. Fetch Collections & Cards
+            const colRes = await this.apiCall('getCollections');
+            if (colRes && colRes.collections) {
+                this.collections = colRes.collections;
+                if (this.collections.length > 0) {
+                    this.selectedCollectionForGacha = this.collections[0].collection_id;
+                }
+            }
+
             const cardsRes = await this.apiCall('getCards');
             if (cardsRes && cardsRes.cards) this.cards = cardsRes.cards;
 
@@ -181,7 +191,7 @@ createApp({
             }
             this.loading = true;
             this.gachaResult = null;
-            const res = await this.apiCall('gachaSpin', { userId: this.user.user_id });
+            const res = await this.apiCall('gachaSpin', { userId: this.user.user_id, collectionId: this.selectedCollectionForGacha });
             if (res && res.status === 'success') {
                 this.gachaResult = res.obtained;
                 this.user.coins = res.coins;
@@ -263,10 +273,15 @@ createApp({
             } else {
                 this.user = { user_id: 'guest123', display_name: 'Guest Tester', coins: 1000 };
             }
+            this.collections = [
+                { collection_id: '77THCC', collection_name: '77 จังหวัดประเทศไทย', description: 'สะสมการ์ดจังหวัดประจำประเทศไทย', icon: '🇹🇭', total_cards: 77 },
+                { collection_id: '711FOOD', collection_name: 'ของกิน 7-11', description: 'ของกินยอดฮิตในร้านสะดวกซื้อ', icon: '🍱', total_cards: 50 },
+                { collection_id: '90S', collection_name: 'ไอเทมยุค 90s', description: 'ของเล่นและขนมในความทรงจำ', icon: '🎮', total_cards: 30 }
+            ];
             this.cards = [
-                { card_id: 'TH-10', name: 'กรุงเทพมหานคร', region: 'Central', rarity: 'Rare', slogan: 'กรุงเทพฯ ดุจเทพสร้าง...', stat_tourism: 95, stat_culture: 90, attraction_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },
-                { card_id: 'TH-50', name: 'เชียงใหม่', region: 'North', rarity: 'Common', slogan: 'ดอยสุเทพเป็นศรี ประเพณีเป็นสง่า...', stat_tourism: 99, stat_culture: 85, attraction_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },
-                { card_id: 'TH-83', name: 'ภูเก็ต', region: 'South', rarity: 'Secret', slogan: 'ไข่มุกอันดามัน สวรรค์เมืองใต้...', stat_tourism: 99, stat_culture: 80, attraction_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },
+                { collection_id: '77THCC', card_id: '77THCC-01', name: 'กรุงเทพมหานคร', category_tag: 'Central', rarity: 'Rare', slogan: 'กรุงเทพฯ ดุจเทพสร้าง...', stat_1_label: 'ท่องเที่ยว', stat_1_val: 95, stat_2_label: 'วัฒนธรรม', stat_2_val: 90, link_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },
+                { collection_id: '77THCC', card_id: '77THCC-02', name: 'เชียงใหม่', category_tag: 'North', rarity: 'Common', slogan: 'ดอยสุเทพเป็นศรี ประเพณีเป็นสง่า...', stat_1_label: 'ท่องเที่ยว', stat_1_val: 99, stat_2_label: 'วัฒนธรรม', stat_2_val: 85, link_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },
+                { collection_id: '711FOOD', card_id: '711FOOD-01', name: 'ข้าวกล่องกะเพราหมูสับ', category_tag: 'Food', rarity: 'Common', slogan: 'อร่อยด่วนทันใจ...', stat_1_label: 'ความอร่อย', stat_1_val: 80, stat_2_label: 'แคลอรี', stat_2_val: 550, link_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' }
             ];
             this.inventory = [
                 { id: 'INV-1', user_id: this.user.user_id, card_id: 'TH-10' }

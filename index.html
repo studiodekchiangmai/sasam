@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>สะสม (Sasam) - แพลตฟอร์มสะสมการ์ด</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
@@ -40,36 +40,20 @@
                         <span class="sub-text">{{ inventory.length }}/{{ cards.length }} การ์ด</span>
                     </div>
 
-                    <div class="category-card cat-2569" @click="openAlbum('', '🗺️ การ์ดทั้งหมดในระบบ')">
+                    <div class="category-card" @click="openAlbum('', '🗺️ การ์ดทั้งหมดในระบบ')">
                         <div class="category-info">
                             <h3>🗺️ การ์ดทั้งหมด (All Cards)</h3>
                             <p>คอลเลกชันการ์ดทั้งหมดในระบบสะสม</p>
                         </div>
-                        <div class="category-badge">{{ countByRegion('') }}</div>
+                        <div class="category-badge">{{ countByCollection('') }}</div>
                     </div>
 
-                    <div class="category-card cat-77" @click="openAlbum('Central', '🏛️ ภาคกลาง & กรุงเทพฯ')">
+                    <div v-for="col in collections" :key="col.collection_id" class="category-card" @click="openAlbum(col.collection_id, col.icon + ' ' + col.collection_name)">
                         <div class="category-info">
-                            <h3>🏛️ ภาคกลาง (Central)</h3>
-                            <p>สถานที่ท่องเที่ยวและแลนด์มาร์กภาคกลาง</p>
+                            <h3>{{ col.icon }} {{ col.collection_name }}</h3>
+                            <p>{{ col.description }}</p>
                         </div>
-                        <div class="category-badge">{{ countByRegion('Central') }}</div>
-                    </div>
-
-                    <div class="category-card cat-90s" @click="openAlbum('North', '⛰️ ภาคเหนือ')">
-                        <div class="category-info">
-                            <h3>⛰️ ภาคเหนือ (North)</h3>
-                            <p>สถานที่ท่องเที่ยวและแลนด์มาร์กภาคเหนือ</p>
-                        </div>
-                        <div class="category-badge">{{ countByRegion('North') }}</div>
-                    </div>
-
-                    <div class="category-card cat-77" @click="openAlbum('South', '🏖️ ภาคใต้')">
-                        <div class="category-info">
-                            <h3>🏖️ ภาคใต้ (South)</h3>
-                            <p>สถานที่ท่องเที่ยวและแลนด์มาร์กภาคใต้</p>
-                        </div>
-                        <div class="category-badge">{{ countByRegion('South') }}</div>
+                        <div class="category-badge">{{ countByCollection(col.collection_id) }}</div>
                     </div>
                 </div>
 
@@ -79,7 +63,7 @@
                         <button class="back-btn" @click="currentView = 'hub'">←</button>
                         <div>
                             <h2 style="font-size:18px;">{{ albumTitle }}</h2>
-                            <p class="sub-text">{{ countByRegion(selectedRegion) }} การ์ดครอบครอง</p>
+                            <p class="sub-text">{{ countByCollection(selectedCollection) }} การ์ดครอบครอง</p>
                         </div>
                     </div>
                     <div class="card-grid">
@@ -140,10 +124,17 @@
                 <div :class="['view-section', { active: currentView === 'gacha' }]">
                     <div class="section-title">สุ่มซองการ์ดประจำวัน 🎲</div>
                     <div class="gacha-container">
-                        <p class="sub-text">อัตราสุ่ม: Secret (5%), Rare (25%), Common (70%)</p>
+                        <p class="sub-text">เลือกคอลเลกชันเพื่อสุ่มการ์ด (50 🪙)</p>
+                        
+                        <div style="margin: 15px 0;">
+                            <select v-model="selectedCollectionForGacha" class="gacha-select" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-dark); color: white; font-size: 16px;">
+                                <option v-for="col in collections" :value="col.collection_id">{{ col.icon }} {{ col.collection_name }}</option>
+                            </select>
+                        </div>
+
                         <div class="pack-box" @click="spinGacha">
                             <div style="font-size: 50px; margin-bottom: 10px;">📦</div>
-                            <div style="font-weight: 700; font-size: 16px;">MEGA PACK</div>
+                            <div style="font-weight: 700; font-size: 16px;">สุ่มการ์ด 1 ใบ</div>
                             <div style="font-size: 12px; color: var(--accent-green); margin-top: 5px;">50 🪙 / ซอง</div>
                         </div>
                         <button class="draw-btn-main" @click="spinGacha" :disabled="loading || (user && user.coins < 50)">
@@ -238,27 +229,27 @@
 
                 <div v-if="hasCard(selectedCardModal.card_id)" class="modal-stats">
                     <div class="modal-stat-box tourism">
-                        <div class="label">พลังท่องเที่ยว</div>
-                        <div class="value">{{ selectedCardModal.stat_tourism }}</div>
+                        <div class="label">{{ selectedCardModal.stat_1_label || 'Stat 1' }}</div>
+                        <div class="value">{{ selectedCardModal.stat_1_val || '-' }}</div>
                     </div>
                     <div class="modal-stat-box culture">
-                        <div class="label">พลังวัฒนธรรม</div>
-                        <div class="value">{{ selectedCardModal.stat_culture }}</div>
+                        <div class="label">{{ selectedCardModal.stat_2_label || 'Stat 2' }}</div>
+                        <div class="value">{{ selectedCardModal.stat_2_val || '-' }}</div>
                     </div>
                 </div>
                 <div v-else style="margin-top:12px;">
                     <p class="sub-text">🔒 คุณยังไม่มีการ์ดใบนี้</p>
                 </div>
 
-                <a v-if="hasCard(selectedCardModal.card_id) && selectedCardModal.attraction_url && selectedCardModal.attraction_url !== '#'"
-                   :href="selectedCardModal.attraction_url" target="_blank" class="draw-btn-main" style="display:block; margin-top:15px; padding:12px; font-size:14px; text-decoration:none;">
-                    ข้อมูลสถานที่ท่องเที่ยว
+                <a v-if="hasCard(selectedCardModal.card_id) && selectedCardModal.link_url && selectedCardModal.link_url !== '#'"
+                   :href="selectedCardModal.link_url" target="_blank" class="draw-btn-main" style="display:block; margin-top:15px; padding:12px; font-size:14px; text-decoration:none;">
+                    ข้อมูลอ้างอิง
                 </a>
                 <button v-else class="draw-btn-main" style="margin-top:15px; padding:12px; font-size:14px;" @click="selectedCardModal = null">ตกลง</button>
             </div>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
