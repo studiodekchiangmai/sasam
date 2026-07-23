@@ -162,7 +162,7 @@ createApp({
                 return 'https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam';
             }
             // ใช้ลิงก์รูปแบบใหม่ของ Google Drive ที่เสถียรกว่าในการแสดงผล (Hotlink)
-            return `https://drive.google.com/file/d/${driveId}/view`;
+            return `https://drive.google.com/file/d/${driveId}/view?usp=sharing`;
         },
 
         // Card Modal
