@@ -25,6 +25,7 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+/* ==================== Base Body & Responsive Canvas ==================== */
 body {
     background-color: #05070a;
     color: var(--text-main);
@@ -32,41 +33,61 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    padding: 10px;
+    padding: 0;
+    margin: 0;
 }
 
-/* ==================== App Container ==================== */
-.app-container {
+#app, #login-app {
     width: 100%;
     max-width: 430px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ==================== App Container (Mobile Native + Desktop Frame) ==================== */
+.app-container {
+    width: 100vw;
     height: 100vh;
     min-height: 100vh;
     background-color: var(--bg-main);
     border-radius: 0;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
 }
 
-@media (min-width: 480px) {
+/* Desktop Frame (Min Width 481px) */
+@media (min-width: 481px) {
+    body {
+        padding: 20px;
+    }
+    
     .app-container {
-        border-radius: 36px;
-        min-height: 880px;
+        width: 430px;
+        max-width: 430px;
         height: 880px;
+        max-height: 92vh;
+        min-height: 800px;
+        border-radius: 36px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
     }
 }
 
 /* ==================== Top Header ==================== */
 .top-header {
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 20px 10px;
-    background: rgba(11, 14, 20, 0.8);
+    padding: 16px 20px;
+    background: rgba(11, 14, 20, 0.95);
     backdrop-filter: blur(10px);
     z-index: 10;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .brand-logo {
@@ -126,6 +147,7 @@ body {
 /* ==================== Content Area ==================== */
 .content-area {
     flex: 1;
+    width: 100%;
     overflow-y: auto;
     padding: 15px 20px 100px;
     scroll-behavior: smooth;
@@ -137,11 +159,13 @@ body {
 
 .view-section {
     display: none;
+    width: 100%;
     animation: fadeIn 0.25s ease-in-out;
 }
 
 .view-section.active {
     display: block;
+    width: 100%;
 }
 
 @keyframes fadeIn {
@@ -157,6 +181,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
 }
 
 .sub-text {
@@ -167,6 +192,7 @@ body {
 
 /* ==================== Category Hub Cards ==================== */
 .category-card {
+    width: 100%;
     background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-element) 100%);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -212,6 +238,7 @@ body {
 
 /* ==================== Album Grid ==================== */
 .album-header {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -238,6 +265,7 @@ body {
 }
 
 .card-grid {
+    width: 100%;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
@@ -260,6 +288,7 @@ body {
     align-items: center;
     height: 100%;
     min-height: 150px;
+    width: 100%;
 }
 
 .card-item:hover {
@@ -351,6 +380,7 @@ body {
 }
 
 .market-filters {
+    width: 100%;
     display: flex;
     gap: 8px;
     margin-bottom: 15px;
@@ -383,12 +413,14 @@ body {
 }
 
 .market-list {
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
 .market-item {
+    width: 100%;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -452,6 +484,7 @@ body {
 }
 
 .sell-section {
+    width: 100%;
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid var(--border-color);
@@ -464,6 +497,7 @@ body {
 }
 
 .sell-form {
+    width: 100%;
     display: flex;
     gap: 8px;
 }
@@ -500,6 +534,7 @@ body {
 
 /* ==================== Gacha ==================== */
 .gacha-container {
+    width: 100%;
     text-align: center;
     padding: 20px 10px;
 }
@@ -545,6 +580,7 @@ body {
 .draw-btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .gacha-actions {
+    width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -574,6 +610,7 @@ body {
 
 /* ==================== Portfolio / Stats ==================== */
 .portfolio-card {
+    width: 100%;
     background: linear-gradient(135deg, #171e2b 0%, #0d121a 100%);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -622,6 +659,7 @@ body {
 }
 
 .stat-card {
+    width: 100%;
     background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-element) 100%);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -641,8 +679,9 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
+    width: 100%;
     height: 75px;
-    background: rgba(18, 23, 33, 0.92);
+    background: rgba(18, 23, 33, 0.95);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--border-color);
     display: flex;
