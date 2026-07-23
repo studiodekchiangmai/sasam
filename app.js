@@ -6,8 +6,6 @@ const { createApp } = Vue;
 createApp({
     data() {
         return {
-            isLoggedIn: false,
-            loginUsername: "",
             user: null,
             profilePic: null,
             cards: [],
@@ -22,68 +20,37 @@ createApp({
         }
     },
     async mounted() {
-        // Try to initialize LIFF first
+        // Check local storage for login state
+        const savedUser = localStorage.getItem('sasam_user');
+        if (!savedUser) {
+            // Not logged in, redirect to login page
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        this.user = JSON.parse(savedUser);
+        
         try {
             if (LIFF_ID !== "YOUR_LIFF_ID_HERE") {
                 await liff.init({ liffId: LIFF_ID });
                 if (liff.isLoggedIn()) {
-                    await this.handleLINELogin();
-                    return; // If logged in via LINE, skip local storage check
+                    const profile = await liff.getProfile();
+                    this.profilePic = profile.pictureUrl;
                 }
             }
         } catch (e) {
             console.error('LIFF init failed', e);
         }
 
-        // Check local storage for manual login
-        const savedUser = localStorage.getItem('sasam_user');
-        if (savedUser) {
-            this.user = JSON.parse(savedUser);
-            this.isLoggedIn = true;
-            await this.fetchData();
-        } else {
-            this.loading = false; // Show login screen
-        }
+        await this.fetchData();
     },
     methods: {
-        async handleLINELogin() {
-            this.loading = true;
-            const profile = await liff.getProfile();
-            this.user = { user_id: profile.userId, display_name: profile.displayName };
-            this.profilePic = profile.pictureUrl;
-            this.isLoggedIn = true;
-            await this.fetchData();
-        },
-        async loginWithLINE() {
-            if (LIFF_ID === "YOUR_LIFF_ID_HERE") {
-                alert("กรุณาตั้งค่า LIFF ID ก่อนใช้งานฟีเจอร์ล็อกอินด้วย LINE");
-                return;
-            }
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            } else {
-                await this.handleLINELogin();
-            }
-        },
-        async loginManually() {
-            if (!this.loginUsername.trim()) return alert("กรุณากรอกชื่อผู้ใช้งาน");
-            
-            const username = this.loginUsername.trim();
-            this.user = { user_id: username, display_name: username };
-            this.profilePic = null;
-            this.isLoggedIn = true;
-            await this.fetchData();
-        },
         logout() {
             localStorage.removeItem('sasam_user');
             if (typeof liff !== 'undefined' && LIFF_ID !== "YOUR_LIFF_ID_HERE" && liff.isLoggedIn()) {
                 liff.logout();
             }
-            this.isLoggedIn = false;
-            this.user = null;
-            this.loginUsername = "";
-            this.cards = [];
-            this.inventory = [];
+            window.location.href = 'login.html';
         },
         async apiCall(action, payload = {}) {
             if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
@@ -115,10 +82,11 @@ createApp({
             if (cardsRes) this.cards = cardsRes.cards;
 
             if (this.user) {
+                // This call acts as both fetch and auto-register on the backend
                 const userRes = await this.apiCall('getUserData', { userId: this.user.user_id, display_name: this.user.display_name });
                 if (userRes) {
                     this.user = userRes.user;
-                    localStorage.setItem('sasam_user', JSON.stringify(this.user)); // Save to cache
+                    localStorage.setItem('sasam_user', JSON.stringify(this.user)); // Update cache with exact coins
                 }
 
                 const invRes = await this.apiCall('getUserInventory', { userId: this.user.user_id });
@@ -218,7 +186,6 @@ createApp({
             this.loading = false;
         },
         loadMockData() {
-            // Only load mock data if manually logged in and API is missing
             if (this.user) {
                 this.user.coins = 1000;
             } else {

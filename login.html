@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sasam - สะสมการ์ด 77 จังหวัด</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-app" class="flex flex-col items-center justify-center min-h-screen bg-blue-50 p-6 relative">
+        <!-- Loading Overlay -->
+        <div v-if="loading" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+        </div>
+
+        <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm text-center">
+            <h1 class="text-4xl font-bold text-blue-600 mb-2">Sasam</h1>
+            <p class="text-gray-500 mb-8">สะสมการ์ด 77 จังหวัด</p>
+            
+            <button @click="loginWithLINE" class="w-full bg-[#06C755] text-white font-bold py-3 rounded-xl mb-4 hover:bg-[#05b34c] transition shadow flex justify-center items-center space-x-2">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.963 8.948 9.53 9.608.371.077.868.238 1 .558.113.275.074.707.035 1.002-.046.331-.301 1.776-.364 2.158-.087.525-.407 1.99 1.737 1.085 2.144-.906 11.536-6.793 11.83-11.543H24c0-.022 0-.044 0-.066-.026-1.127-.089-2.227-.146-2.8z"/></svg>
+                <span>เข้าสู่ระบบด้วย LINE</span>
+            </button>
+            
+            <div class="relative flex py-4 items-center">
+                <div class="flex-grow border-t border-gray-300"></div>
+                <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">หรือ</span>
+                <div class="flex-grow border-t border-gray-300"></div>
+            </div>
+            
+            <div class="text-left mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่อผู้ใช้งาน (ไม่ต้องใช้รหัสผ่าน)</label>
+                <input type="text" v-model="loginUsername" @keyup.enter="loginManually" placeholder="กรอกชื่อผู้ใช้ของคุณ..." class="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            
+            <button @click="loginManually" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow">
+                เข้าใช้งาน / สมัครสมาชิก
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom JS for Login -->
+    <script src="login.js"></script>
+</body>
+</html>
