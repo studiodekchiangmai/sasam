@@ -6,6 +6,8 @@ const { createApp } = Vue;
 createApp({
     data() {
         return {
+            isLoggedIn: false,
+            loginUsername: "",
             user: null,
             profilePic: null,
             cards: [],
@@ -20,29 +22,68 @@ createApp({
         }
     },
     async mounted() {
-        await this.initLIFF();
-        await this.fetchData();
+        // Try to initialize LIFF first
+        try {
+            if (LIFF_ID !== "YOUR_LIFF_ID_HERE") {
+                await liff.init({ liffId: LIFF_ID });
+                if (liff.isLoggedIn()) {
+                    await this.handleLINELogin();
+                    return; // If logged in via LINE, skip local storage check
+                }
+            }
+        } catch (e) {
+            console.error('LIFF init failed', e);
+        }
+
+        // Check local storage for manual login
+        const savedUser = localStorage.getItem('sasam_user');
+        if (savedUser) {
+            this.user = JSON.parse(savedUser);
+            this.isLoggedIn = true;
+            await this.fetchData();
+        } else {
+            this.loading = false; // Show login screen
+        }
     },
     methods: {
-        async initLIFF() {
-            try {
-                if (LIFF_ID !== "YOUR_LIFF_ID_HERE") {
-                    await liff.init({ liffId: LIFF_ID });
-                    if (liff.isLoggedIn()) {
-                        const profile = await liff.getProfile();
-                        this.user = { user_id: profile.userId, display_name: profile.displayName };
-                        this.profilePic = profile.pictureUrl;
-                    } else {
-                        liff.login();
-                    }
-                } else {
-                    // Fallback for local browser testing without LIFF
-                    this.user = { user_id: 'guest123', display_name: 'Guest Tester', coins: 1000 };
-                }
-            } catch (e) {
-                console.error('LIFF init failed', e);
-                this.user = { user_id: 'guest123', display_name: 'Guest Tester', coins: 1000 };
+        async handleLINELogin() {
+            this.loading = true;
+            const profile = await liff.getProfile();
+            this.user = { user_id: profile.userId, display_name: profile.displayName };
+            this.profilePic = profile.pictureUrl;
+            this.isLoggedIn = true;
+            await this.fetchData();
+        },
+        async loginWithLINE() {
+            if (LIFF_ID === "YOUR_LIFF_ID_HERE") {
+                alert("กรุณาตั้งค่า LIFF ID ก่อนใช้งานฟีเจอร์ล็อกอินด้วย LINE");
+                return;
             }
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                await this.handleLINELogin();
+            }
+        },
+        async loginManually() {
+            if (!this.loginUsername.trim()) return alert("กรุณากรอกชื่อผู้ใช้งาน");
+            
+            const username = this.loginUsername.trim();
+            this.user = { user_id: username, display_name: username };
+            this.profilePic = null;
+            this.isLoggedIn = true;
+            await this.fetchData();
+        },
+        logout() {
+            localStorage.removeItem('sasam_user');
+            if (typeof liff !== 'undefined' && LIFF_ID !== "YOUR_LIFF_ID_HERE" && liff.isLoggedIn()) {
+                liff.logout();
+            }
+            this.isLoggedIn = false;
+            this.user = null;
+            this.loginUsername = "";
+            this.cards = [];
+            this.inventory = [];
         },
         async apiCall(action, payload = {}) {
             if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
@@ -75,7 +116,10 @@ createApp({
 
             if (this.user) {
                 const userRes = await this.apiCall('getUserData', { userId: this.user.user_id, display_name: this.user.display_name });
-                if (userRes) this.user = userRes.user;
+                if (userRes) {
+                    this.user = userRes.user;
+                    localStorage.setItem('sasam_user', JSON.stringify(this.user)); // Save to cache
+                }
 
                 const invRes = await this.apiCall('getUserInventory', { userId: this.user.user_id });
                 if (invRes) this.inventory = invRes.inventory;
@@ -111,6 +155,7 @@ createApp({
             if (res && res.status === 'success') {
                 this.gachaResult = res.obtained;
                 this.user.coins = res.coins;
+                localStorage.setItem('sasam_user', JSON.stringify(this.user)); // Update cache
                 await this.fetchData();
             } else if (res) {
                 alert("Error: " + res.error);
@@ -140,7 +185,10 @@ createApp({
             const res = await this.apiCall('submitQuiz', { userId: this.user.user_id, isCorrect: ans });
             if (res && res.status === 'success') {
                 alert(res.message);
-                if (res.coins) this.user.coins = res.coins;
+                if (res.coins) {
+                    this.user.coins = res.coins;
+                    localStorage.setItem('sasam_user', JSON.stringify(this.user));
+                }
             }
             this.loading = false;
         },
@@ -170,14 +218,20 @@ createApp({
             this.loading = false;
         },
         loadMockData() {
-            this.user = { user_id: 'guest123', display_name: 'Guest Tester', coins: 1000 };
+            // Only load mock data if manually logged in and API is missing
+            if (this.user) {
+                this.user.coins = 1000;
+            } else {
+                this.user = { user_id: 'guest123', display_name: 'Guest Tester', coins: 1000 };
+            }
+            
             this.cards = [
                 { card_id: 'TH-10', name: 'กรุงเทพมหานคร', region: 'Central', rarity: 'Rare', slogan: 'กรุงเทพฯ ดุจเทพสร้าง...', stat_tourism: 95, stat_culture: 90, attraction_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },
                 { card_id: 'TH-50', name: 'เชียงใหม่', region: 'North', rarity: 'Common', slogan: 'ดอยสุเทพเป็นศรี ประเพณีเป็นสง่า...', stat_tourism: 99, stat_culture: 85, attraction_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },
                 { card_id: 'TH-83', name: 'ภูเก็ต', region: 'South', rarity: 'Secret', slogan: 'ไข่มุกอันดามัน สวรรค์เมืองใต้...', stat_tourism: 99, stat_culture: 80, attraction_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },
             ];
             this.inventory = [
-                { id: 'INV-1', user_id: 'guest123', card_id: 'TH-10' }
+                { id: 'INV-1', user_id: this.user.user_id, card_id: 'TH-10' }
             ];
             this.marketplace = [
                 { listing_id: 'MKT-1', seller_id: 'otherUser', inventory_id: 'INV-X', card_id: 'TH-83', price_coins: 500, status: 'Active' }

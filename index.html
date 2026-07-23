@@ -14,153 +14,186 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl relative pb-20">
-        <!-- Header -->
-        <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-50">
-            <div class="flex justify-between items-center">
-                <h1 class="text-xl font-bold">Sasam (สะสม)</h1>
-                <div v-if="user" class="flex items-center space-x-2">
-                    <img v-if="profilePic" :src="profilePic" class="w-8 h-8 rounded-full border-2 border-white">
-                    <div class="text-sm">
-                        <p class="font-semibold">{{ user.display_name }}</p>
-                        <p class="text-yellow-300">🪙 {{ user.coins }}</p>
-                    </div>
-                </div>
-            </div>
-        </header>
-
+    <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl relative">
+        
         <!-- Loading Overlay -->
-        <div v-if="loading" class="absolute inset-0 bg-white/80 z-40 flex items-center justify-center">
+        <div v-if="loading" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
             <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
         </div>
 
-        <!-- Main Content -->
-        <main class="p-4 h-full">
-            <!-- Tabs Navigation -->
-            <div class="flex border-b mb-4">
-                <button @click="currentTab = 'collection'" :class="{'border-blue-600 text-blue-600': currentTab === 'collection'}" class="flex-1 py-2 font-semibold border-b-2 border-transparent">อัลบั้ม</button>
-                <button @click="currentTab = 'gacha'" :class="{'border-blue-600 text-blue-600': currentTab === 'gacha'}" class="flex-1 py-2 font-semibold border-b-2 border-transparent">สุ่มการ์ด</button>
-                <button @click="currentTab = 'market'" :class="{'border-blue-600 text-blue-600': currentTab === 'market'}" class="flex-1 py-2 font-semibold border-b-2 border-transparent">ตลาด</button>
-            </div>
-
-            <!-- Collection Tab -->
-            <div v-show="currentTab === 'collection'" class="grid grid-cols-3 gap-2">
-                <div v-for="card in cards" :key="card.card_id" 
-                     class="relative aspect-[3/4] rounded-lg overflow-hidden shadow-sm cursor-pointer transition-transform hover:scale-105"
-                     @click="viewCardDetails(card)">
-                    <img :src="getDriveImageUrl(card.image_drive_id)" 
-                         class="w-full h-full object-cover" 
-                         :class="{'card-locked': !hasCard(card.card_id)}"
-                         onerror="this.src='https://via.placeholder.com/150?text=Sasam'">
-                    <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] p-1 text-center truncate">
-                        {{ card.name }}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gacha Tab -->
-            <div v-show="currentTab === 'gacha'" class="flex flex-col items-center justify-center py-10 space-y-6">
-                <div class="text-center">
-                    <h2 class="text-2xl font-bold text-gray-800">ตู้สุ่มการ์ดประจำจังหวัด</h2>
-                    <p class="text-gray-500 mt-2">สุ่ม 1 ครั้ง ใช้ 50 🪙</p>
-                </div>
+        <!-- Login Screen -->
+        <div v-if="!isLoggedIn" class="flex flex-col items-center justify-center min-h-screen bg-blue-50 p-6">
+            <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm text-center">
+                <h1 class="text-4xl font-bold text-blue-600 mb-2">Sasam</h1>
+                <p class="text-gray-500 mb-8">สะสมการ์ด 77 จังหวัด</p>
                 
-                <button @click="spinGacha" :disabled="loading || (user && user.coins < 50)" 
-                        class="gacha-btn text-white font-bold text-xl py-4 px-12 rounded-full shadow-lg transform transition active:scale-95 disabled:opacity-50">
-                    หมุน Gacha!
+                <button @click="loginWithLINE" class="w-full bg-[#06C755] text-white font-bold py-3 rounded-xl mb-4 hover:bg-[#05b34c] transition shadow flex justify-center items-center space-x-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.963 8.948 9.53 9.608.371.077.868.238 1 .558.113.275.074.707.035 1.002-.046.331-.301 1.776-.364 2.158-.087.525-.407 1.99 1.737 1.085 2.144-.906 11.536-6.793 11.83-11.543H24c0-.022 0-.044 0-.066-.026-1.127-.089-2.227-.146-2.8z"/></svg>
+                    <span>เข้าสู่ระบบด้วย LINE</span>
                 </button>
-
-                <div v-if="gachaResult" class="mt-8 text-center animate-bounce">
-                    <h3 class="text-lg font-bold text-green-600">ยินดีด้วย! คุณได้รับ</h3>
-                    <img :src="getDriveImageUrl(gachaResult.image_drive_id)" onerror="this.src='https://via.placeholder.com/150?text=Sasam'" class="w-32 h-44 object-cover mx-auto mt-2 rounded shadow-md border-4 border-yellow-400">
-                    <p class="font-semibold mt-2">{{ gachaResult.name }} ({{ gachaResult.rarity }})</p>
+                
+                <div class="relative flex py-4 items-center">
+                    <div class="flex-grow border-t border-gray-300"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">หรือ</span>
+                    <div class="flex-grow border-t border-gray-300"></div>
                 </div>
                 
-                <hr class="w-full my-6">
-                
-                <!-- GPS & Quiz Actions (Mock) -->
-                <div class="grid grid-cols-2 gap-4 w-full">
-                    <button @click="mockGPSCheckIn" class="bg-green-500 text-white py-2 rounded shadow flex flex-col items-center">
-                        <span>📍 Check-in GPS</span>
-                        <span class="text-xs text-green-100">จำลองรับการ์ดเชียงใหม่</span>
-                    </button>
-                    <button @click="playQuiz" class="bg-purple-500 text-white py-2 rounded shadow flex flex-col items-center">
-                        <span>🧠 ทายปัญหา</span>
-                        <span class="text-xs text-purple-100">+20 🪙</span>
-                    </button>
+                <div class="text-left mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่อผู้ใช้งาน (ไม่ต้องใช้รหัสผ่าน)</label>
+                    <input type="text" v-model="loginUsername" placeholder="กรอกชื่อผู้ใช้ของคุณ..." class="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
+                
+                <button @click="loginManually" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow">
+                    เข้าใช้งาน / สมัครสมาชิก
+                </button>
             </div>
+        </div>
 
-            <!-- Marketplace Tab -->
-            <div v-show="currentTab === 'market'" class="space-y-4">
-                <div v-if="marketplace.length === 0" class="text-center text-gray-500 py-10">
-                    ยังไม่มีการ์ดวางขายในตลาด
-                </div>
-                <div v-for="item in marketplace" :key="item.listing_id" class="flex bg-white p-3 rounded shadow items-center space-x-4 border">
-                    <img :src="getDriveImageUrl(getCardById(item.card_id).image_drive_id)" onerror="this.src='https://via.placeholder.com/150?text=Sasam'" class="w-16 h-24 object-cover rounded">
-                    <div class="flex-1">
-                        <h3 class="font-bold">{{ getCardById(item.card_id).name }}</h3>
-                        <p class="text-xs text-gray-500">โดย: {{ item.seller_id }}</p>
-                        <p class="font-semibold text-yellow-600 mt-1">ราคา: {{ item.price_coins }} 🪙</p>
-                    </div>
-                    <button v-if="item.seller_id !== user.user_id" @click="buyMarket(item)" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">
-                        ซื้อ
-                    </button>
-                    <button v-else disabled class="bg-gray-300 text-gray-600 px-4 py-2 rounded shadow cursor-not-allowed">
-                        ของคุณ
-                    </button>
-                </div>
-                
-                <!-- Sell Form (Simple) -->
-                <div class="mt-8 border-t pt-4">
-                    <h3 class="font-bold mb-2">ตั้งขายการ์ดของคุณ</h3>
-                    <div class="flex space-x-2">
-                        <select v-model="sellSelectedInv" class="border p-2 rounded flex-1">
-                            <option value="">เลือกการ์ด...</option>
-                            <option v-for="inv in inventory" :value="inv.id">{{ getCardById(inv.card_id).name }}</option>
-                        </select>
-                        <input type="number" v-model="sellPrice" placeholder="ราคา" class="border p-2 rounded w-20">
-                        <button @click="sellItem" class="bg-orange-500 text-white px-4 rounded shadow">ขาย</button>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- Card Detail Modal -->
-        <div v-if="selectedCardModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" @click.self="selectedCardModal = null">
-            <div class="bg-white rounded-xl w-full max-w-sm overflow-hidden shadow-2xl relative">
-                <button @click="selectedCardModal = null" class="absolute top-2 right-2 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center z-10">&times;</button>
-                
-                <img v-if="hasCard(selectedCardModal.card_id)" :src="getDriveImageUrl(selectedCardModal.image_drive_id)" onerror="this.src='https://via.placeholder.com/150?text=Sasam'" class="w-full h-64 object-cover">
-                <div v-else class="w-full h-64 bg-gray-300 flex items-center justify-center text-gray-500">
-                    <span class="text-4xl">🔒</span>
-                </div>
-
-                <div class="p-5">
-                    <div class="flex justify-between items-start mb-2">
-                        <h2 class="text-2xl font-bold">{{ selectedCardModal.name }}</h2>
-                        <span class="px-2 py-1 bg-gray-200 rounded text-xs font-semibold">{{ selectedCardModal.rarity }}</span>
-                    </div>
-                    
-                    <p class="text-sm italic text-gray-600 mb-4">"{{ selectedCardModal.slogan }}"</p>
-                    
-                    <div v-if="hasCard(selectedCardModal.card_id)">
-                        <div class="grid grid-cols-2 gap-2 text-sm mb-4">
-                            <div class="bg-blue-50 p-2 rounded">
-                                <span class="block text-blue-400 text-xs">พลังท่องเที่ยว</span>
-                                <span class="font-bold">{{ selectedCardModal.stat_tourism }}</span>
-                            </div>
-                            <div class="bg-orange-50 p-2 rounded">
-                                <span class="block text-orange-400 text-xs">พลังวัฒนธรรม</span>
-                                <span class="font-bold">{{ selectedCardModal.stat_culture }}</span>
-                            </div>
+        <!-- Main App (Only show when logged in) -->
+        <div v-else class="h-full flex flex-col pb-20">
+            <!-- Header -->
+            <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-40">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-xl font-bold">Sasam</h1>
+                    <div v-if="user" class="flex items-center space-x-3">
+                        <img v-if="profilePic" :src="profilePic" class="w-8 h-8 rounded-full border-2 border-white">
+                        <div class="text-sm">
+                            <p class="font-semibold">{{ user.display_name }}</p>
+                            <p class="text-yellow-300">🪙 {{ user.coins }}</p>
                         </div>
-                        <a :href="selectedCardModal.attraction_url" target="_blank" class="block w-full text-center bg-blue-100 text-blue-700 py-2 rounded font-semibold hover:bg-blue-200">
-                            ข้อมูลสถานที่ท่องเที่ยว
-                        </a>
+                        <button @click="logout" class="ml-2 bg-white/20 hover:bg-white/30 text-white text-xs px-2 py-1 rounded">ออก</button>
                     </div>
-                    <div v-else class="text-center text-red-500 text-sm mt-4">
-                        คุณยังไม่มีการ์ดใบนี้
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="p-4 h-full">
+                <!-- Tabs Navigation -->
+                <div class="flex border-b mb-4">
+                    <button @click="currentTab = 'collection'" :class="{'border-blue-600 text-blue-600': currentTab === 'collection'}" class="flex-1 py-2 font-semibold border-b-2 border-transparent transition">อัลบั้ม</button>
+                    <button @click="currentTab = 'gacha'" :class="{'border-blue-600 text-blue-600': currentTab === 'gacha'}" class="flex-1 py-2 font-semibold border-b-2 border-transparent transition">สุ่มการ์ด</button>
+                    <button @click="currentTab = 'market'" :class="{'border-blue-600 text-blue-600': currentTab === 'market'}" class="flex-1 py-2 font-semibold border-b-2 border-transparent transition">ตลาด</button>
+                </div>
+
+                <!-- Collection Tab -->
+                <div v-show="currentTab === 'collection'" class="grid grid-cols-3 gap-2">
+                    <div v-for="card in cards" :key="card.card_id" 
+                         class="relative aspect-[3/4] rounded-lg overflow-hidden shadow-sm cursor-pointer transition-transform hover:scale-105"
+                         @click="viewCardDetails(card)">
+                        <img :src="getDriveImageUrl(card.image_drive_id)" 
+                             class="w-full h-full object-cover" 
+                             :class="{'card-locked': !hasCard(card.card_id)}"
+                             onerror="this.src='https://via.placeholder.com/150?text=Sasam'">
+                        <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] p-1 text-center truncate">
+                            {{ card.name }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gacha Tab -->
+                <div v-show="currentTab === 'gacha'" class="flex flex-col items-center justify-center py-10 space-y-6">
+                    <div class="text-center">
+                        <h2 class="text-2xl font-bold text-gray-800">ตู้สุ่มการ์ดประจำจังหวัด</h2>
+                        <p class="text-gray-500 mt-2">สุ่ม 1 ครั้ง ใช้ 50 🪙</p>
+                    </div>
+                    
+                    <button @click="spinGacha" :disabled="loading || (user && user.coins < 50)" 
+                            class="gacha-btn text-white font-bold text-xl py-4 px-12 rounded-full shadow-lg transform transition active:scale-95 disabled:opacity-50">
+                        หมุน Gacha!
+                    </button>
+
+                    <div v-if="gachaResult" class="mt-8 text-center animate-bounce">
+                        <h3 class="text-lg font-bold text-green-600">ยินดีด้วย! คุณได้รับ</h3>
+                        <img :src="getDriveImageUrl(gachaResult.image_drive_id)" onerror="this.src='https://via.placeholder.com/150?text=Sasam'" class="w-32 h-44 object-cover mx-auto mt-2 rounded shadow-md border-4 border-yellow-400">
+                        <p class="font-semibold mt-2">{{ gachaResult.name }} ({{ gachaResult.rarity }})</p>
+                    </div>
+                    
+                    <hr class="w-full my-6">
+                    
+                    <!-- GPS & Quiz Actions (Mock) -->
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        <button @click="mockGPSCheckIn" class="bg-green-500 text-white py-2 rounded shadow flex flex-col items-center hover:bg-green-600 transition">
+                            <span>📍 Check-in GPS</span>
+                            <span class="text-xs text-green-100">จำลองรับการ์ดเชียงใหม่</span>
+                        </button>
+                        <button @click="playQuiz" class="bg-purple-500 text-white py-2 rounded shadow flex flex-col items-center hover:bg-purple-600 transition">
+                            <span>🧠 ทายปัญหา</span>
+                            <span class="text-xs text-purple-100">+20 🪙</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Marketplace Tab -->
+                <div v-show="currentTab === 'market'" class="space-y-4">
+                    <div v-if="marketplace.length === 0" class="text-center text-gray-500 py-10">
+                        ยังไม่มีการ์ดวางขายในตลาด
+                    </div>
+                    <div v-for="item in marketplace" :key="item.listing_id" class="flex bg-white p-3 rounded shadow items-center space-x-4 border">
+                        <img :src="getDriveImageUrl(getCardById(item.card_id).image_drive_id)" onerror="this.src='https://via.placeholder.com/150?text=Sasam'" class="w-16 h-24 object-cover rounded">
+                        <div class="flex-1">
+                            <h3 class="font-bold">{{ getCardById(item.card_id).name }}</h3>
+                            <p class="text-xs text-gray-500">โดย: {{ item.seller_id }}</p>
+                            <p class="font-semibold text-yellow-600 mt-1">ราคา: {{ item.price_coins }} 🪙</p>
+                        </div>
+                        <button v-if="item.seller_id !== user.user_id" @click="buyMarket(item)" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">
+                            ซื้อ
+                        </button>
+                        <button v-else disabled class="bg-gray-300 text-gray-600 px-4 py-2 rounded shadow cursor-not-allowed">
+                            ของคุณ
+                        </button>
+                    </div>
+                    
+                    <!-- Sell Form (Simple) -->
+                    <div class="mt-8 border-t pt-4">
+                        <h3 class="font-bold mb-2">ตั้งขายการ์ดของคุณ</h3>
+                        <div class="flex space-x-2">
+                            <select v-model="sellSelectedInv" class="border p-2 rounded flex-1">
+                                <option value="">เลือกการ์ด...</option>
+                                <option v-for="inv in inventory" :value="inv.id">{{ getCardById(inv.card_id).name }}</option>
+                            </select>
+                            <input type="number" v-model="sellPrice" placeholder="ราคา" class="border p-2 rounded w-20">
+                            <button @click="sellItem" class="bg-orange-500 text-white px-4 rounded shadow hover:bg-orange-600">ขาย</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Card Detail Modal -->
+            <div v-if="selectedCardModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" @click.self="selectedCardModal = null">
+                <div class="bg-white rounded-xl w-full max-w-sm overflow-hidden shadow-2xl relative">
+                    <button @click="selectedCardModal = null" class="absolute top-2 right-2 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center z-10">&times;</button>
+                    
+                    <img v-if="hasCard(selectedCardModal.card_id)" :src="getDriveImageUrl(selectedCardModal.image_drive_id)" onerror="this.src='https://via.placeholder.com/150?text=Sasam'" class="w-full h-64 object-cover">
+                    <div v-else class="w-full h-64 bg-gray-300 flex items-center justify-center text-gray-500">
+                        <span class="text-4xl">🔒</span>
+                    </div>
+
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <h2 class="text-2xl font-bold">{{ selectedCardModal.name }}</h2>
+                            <span class="px-2 py-1 bg-gray-200 rounded text-xs font-semibold">{{ selectedCardModal.rarity }}</span>
+                        </div>
+                        
+                        <p class="text-sm italic text-gray-600 mb-4">"{{ selectedCardModal.slogan }}"</p>
+                        
+                        <div v-if="hasCard(selectedCardModal.card_id)">
+                            <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+                                <div class="bg-blue-50 p-2 rounded">
+                                    <span class="block text-blue-400 text-xs">พลังท่องเที่ยว</span>
+                                    <span class="font-bold">{{ selectedCardModal.stat_tourism }}</span>
+                                </div>
+                                <div class="bg-orange-50 p-2 rounded">
+                                    <span class="block text-orange-400 text-xs">พลังวัฒนธรรม</span>
+                                    <span class="font-bold">{{ selectedCardModal.stat_culture }}</span>
+                                </div>
+                            </div>
+                            <a :href="selectedCardModal.attraction_url" target="_blank" class="block w-full text-center bg-blue-100 text-blue-700 py-2 rounded font-semibold hover:bg-blue-200">
+                                ข้อมูลสถานที่ท่องเที่ยว
+                            </a>
+                        </div>
+                        <div v-else class="text-center text-red-500 text-sm mt-4">
+                            คุณยังไม่มีการ์ดใบนี้
+                        </div>
                     </div>
                 </div>
             </div>
