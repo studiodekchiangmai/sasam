@@ -159,10 +159,12 @@ createApp({
         getDriveImageUrl(driveId) {
             if (!driveId || driveId === "1A2B3C4D5E6F7G8H9I" || driveId.startsWith("http")) {
                 if (driveId && driveId.startsWith("http")) return driveId;
-                return 'https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam';
+                // เปลี่ยน Placeholder เป็นตัวอื่นเนื่องจาก via.placeholder.com อาจจะล่มหรือโดนบล็อก
+                return 'https://placehold.co/200x280/151a23/00ff87?text=Sasam';
             }
-            // ใช้ลิงก์รูปแบบใหม่ของ Google Drive ที่เสถียรกว่าในการแสดงผล (Hotlink)
-            return `https://drive.google.com/file/d/${driveId}/view?usp=sharing`;
+            // ห้ามใช้ /view?usp=sharing เพราะมันคือหน้าเว็บ ไม่ใช่ไฟล์รูปภาพ
+            // ใช้ลิงก์ thumbnail ของ Google Drive แทน (ใช้งานเป็น img src ได้)
+            return `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`;
         },
 
         // Card Modal
