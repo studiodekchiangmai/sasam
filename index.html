@@ -3,177 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sasam - สะสมการ์ด 77 จังหวัด</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Vue 3 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- LIFF SDK -->
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Custom CSS -->
+    <title>สะสม (Sasam) - แพลตฟอร์มสะสมการ์ด</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
-    <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl relative">
-        
+    <div id="app">
         <!-- Loading Overlay -->
-        <div v-if="loading" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+        <div v-if="loading" class="loading-overlay">
+            <div class="spinner"></div>
         </div>
 
-        <!-- Main App (Only rendered when logged in) -->
-        <div v-if="user" class="h-full flex flex-col pb-20">
-            <!-- Header -->
-            <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-40">
-                <div class="flex justify-between items-center">
-                    <h1 class="text-xl font-bold">Sasam</h1>
-                    <div class="flex items-center space-x-3">
-                        <img v-if="profilePic" :src="profilePic" class="w-8 h-8 rounded-full border-2 border-white">
-                        <div class="text-sm">
-                            <p class="font-semibold">{{ user.display_name }}</p>
-                            <p class="text-yellow-300">🪙 {{ user.coins || 0 }}</p>
+        <div class="app-container">
+            <!-- Top Header Bar -->
+            <div class="top-header">
+                <div class="brand-logo">
+                    🎴 <span class="accent">สะสม</span>
+                </div>
+                <div class="header-actions">
+                    <div class="balance-badge">
+                        🪙 <span>{{ user ? user.coins : 0 }}</span>
+                    </div>
+                    <img v-if="profilePic" :src="profilePic" class="user-avatar" @click="logout" title="ออกจากระบบ">
+                    <div v-else class="user-avatar-placeholder" @click="logout" title="ออกจากระบบ">👤</div>
+                </div>
+            </div>
+
+            <!-- Scrollable Content Area -->
+            <div class="content-area">
+
+                <!-- 1. COLLECTION HUB -->
+                <div :class="['view-section', { active: currentView === 'hub' }]">
+                    <div class="section-title">
+                        คอลเลกชันการ์ด
+                        <span class="sub-text">{{ inventory.length }}/{{ cards.length }} การ์ด</span>
+                    </div>
+
+                    <div class="category-card cat-77" @click="openAlbum('77-provinces', '🗺️ อัลบั้ม 77 จังหวัด')">
+                        <div class="category-info">
+                            <h3>🗺️ อัลบั้ม 77 จังหวัด</h3>
+                            <p>สะสมสถานที่และแลนด์มาร์กทั่วไทย</p>
                         </div>
-                        <button @click="logout" class="ml-2 bg-white/20 hover:bg-white/30 text-white text-xs px-2 py-1 rounded">ออก</button>
+                        <div class="category-badge">{{ countByRegion('') }}/{{ cards.length }}</div>
                     </div>
                 </div>
-            </header>
 
-            <!-- Main Content -->
-            <main class="p-4 h-full">
-                <!-- Tabs Navigation -->
-                <div class="flex border-b mb-4">
-                    <button @click="currentTab = 'collection'" :class="{'border-blue-600 text-blue-600': currentTab === 'collection'}" class="flex-1 py-2 font-semibold border-b-2 border-transparent transition">อัลบั้ม</button>
-                    <button @click="currentTab = 'gacha'" :class="{'border-blue-600 text-blue-600': currentTab === 'gacha'}" class="flex-1 py-2 font-semibold border-b-2 border-transparent transition">สุ่มการ์ด</button>
-                    <button @click="currentTab = 'market'" :class="{'border-blue-600 text-blue-600': currentTab === 'market'}" class="flex-1 py-2 font-semibold border-b-2 border-transparent transition">ตลาด</button>
-                </div>
-
-                <!-- Collection Tab -->
-                <div v-show="currentTab === 'collection'" class="grid grid-cols-3 gap-2">
-                    <div v-for="card in cards" :key="card.card_id" 
-                         class="relative aspect-[3/4] rounded-lg overflow-hidden shadow-sm cursor-pointer transition-transform hover:scale-105"
-                         @click="viewCardDetails(card)">
-                        <img :src="getDriveImageUrl(card.image_drive_id)" 
-                             class="w-full h-full object-cover" 
-                             :class="{'card-locked': !hasCard(card.card_id)}"
-                             onerror="this.src='https://via.placeholder.com/150?text=Sasam'">
-                        <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] p-1 text-center truncate">
-                            {{ card.name }}
+                <!-- 2. ALBUM GRID VIEW -->
+                <div :class="['view-section', { active: currentView === 'album' }]">
+                    <div class="album-header">
+                        <button class="back-btn" @click="currentView = 'hub'">←</button>
+                        <div>
+                            <h2 style="font-size:18px;">{{ albumTitle }}</h2>
+                            <p class="sub-text">{{ inventory.length }}/{{ cards.length }} การ์ดครอบครอง</p>
+                        </div>
+                    </div>
+                    <div class="card-grid">
+                        <div v-for="card in cards" :key="card.card_id"
+                             :class="['card-item', hasCard(card.card_id) ? 'unlocked' : 'locked']"
+                             @click="openCardModal(card)">
+                            <img :src="getDriveImageUrl(card.image_drive_id)" :alt="card.name" onerror="this.src='https://picsum.photos/200/280?random=' + Math.floor(Math.random()*999)">
+                            <div class="card-name">{{ card.name }}</div>
+                            <div class="card-id">#{{ card.card_id }}</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gacha Tab -->
-                <div v-show="currentTab === 'gacha'" class="flex flex-col items-center justify-center py-10 space-y-6">
-                    <div class="text-center">
-                        <h2 class="text-2xl font-bold text-gray-800">ตู้สุ่มการ์ดประจำจังหวัด</h2>
-                        <p class="text-gray-500 mt-2">สุ่ม 1 ครั้ง ใช้ 50 🪙</p>
+                <!-- 3. MARKET LIVE -->
+                <div :class="['view-section', { active: currentView === 'market' }]">
+                    <div class="section-title">
+                        Market Live 🔴
+                        <span class="sub-text">ซื้อขายแลกเปลี่ยนการ์ด</span>
                     </div>
-                    
-                    <button @click="spinGacha" :disabled="loading || (user && user.coins < 50)" 
-                            class="gacha-btn text-white font-bold text-xl py-4 px-12 rounded-full shadow-lg transform transition active:scale-95 disabled:opacity-50">
-                        หมุน Gacha!
-                    </button>
+                    <input type="text" class="market-search" v-model="marketSearch" placeholder="🔍 ค้นหาชื่อการ์ด...">
 
-                    <div v-if="gachaResult" class="mt-8 text-center animate-bounce">
-                        <h3 class="text-lg font-bold text-green-600">ยินดีด้วย! คุณได้รับ</h3>
-                        <img :src="getDriveImageUrl(gachaResult.image_drive_id)" onerror="this.src='https://via.placeholder.com/150?text=Sasam'" class="w-32 h-44 object-cover mx-auto mt-2 rounded shadow-md border-4 border-yellow-400">
-                        <p class="font-semibold mt-2">{{ gachaResult.name }} ({{ gachaResult.rarity }})</p>
-                    </div>
-                    
-                    <hr class="w-full my-6">
-                    
-                    <!-- GPS & Quiz Actions (Mock) -->
-                    <div class="grid grid-cols-2 gap-4 w-full">
-                        <button @click="mockGPSCheckIn" class="bg-green-500 text-white py-2 rounded shadow flex flex-col items-center hover:bg-green-600 transition">
-                            <span>📍 Check-in GPS</span>
-                            <span class="text-xs text-green-100">จำลองรับการ์ดเชียงใหม่</span>
-                        </button>
-                        <button @click="playQuiz" class="bg-purple-500 text-white py-2 rounded shadow flex flex-col items-center hover:bg-purple-600 transition">
-                            <span>🧠 ทายปัญหา</span>
-                            <span class="text-xs text-purple-100">+20 🪙</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Marketplace Tab -->
-                <div v-show="currentTab === 'market'" class="space-y-4">
-                    <div v-if="marketplace.length === 0" class="text-center text-gray-500 py-10">
-                        ยังไม่มีการ์ดวางขายในตลาด
-                    </div>
-                    <div v-for="item in marketplace" :key="item.listing_id" class="flex bg-white p-3 rounded shadow items-center space-x-4 border">
-                        <img :src="getDriveImageUrl(getCardById(item.card_id).image_drive_id)" onerror="this.src='https://via.placeholder.com/150?text=Sasam'" class="w-16 h-24 object-cover rounded">
-                        <div class="flex-1">
-                            <h3 class="font-bold">{{ getCardById(item.card_id).name }}</h3>
-                            <p class="text-xs text-gray-500">โดย: {{ item.seller_id }}</p>
-                            <p class="font-semibold text-yellow-600 mt-1">ราคา: {{ item.price_coins }} 🪙</p>
+                    <div class="market-list">
+                        <div v-if="filteredMarketplace.length === 0" style="text-align:center; padding:30px 0;">
+                            <p class="sub-text">ยังไม่มีการ์ดวางขายในตลาด</p>
                         </div>
-                        <button v-if="item.seller_id !== user.user_id" @click="buyMarket(item)" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">
-                            ซื้อ
-                        </button>
-                        <button v-else disabled class="bg-gray-300 text-gray-600 px-4 py-2 rounded shadow cursor-not-allowed">
-                            ของคุณ
-                        </button>
+                        <div v-for="item in filteredMarketplace" :key="item.listing_id" class="market-item">
+                            <img :src="getDriveImageUrl(getCardById(item.card_id).image_drive_id)" :alt="getCardById(item.card_id).name" onerror="this.src='https://picsum.photos/200/280?random=' + Math.floor(Math.random()*999)">
+                            <div class="market-details">
+                                <div class="market-title">{{ getCardById(item.card_id).name }}</div>
+                                <div class="market-sub">
+                                    <span :class="'rarity-' + (getCardById(item.card_id).rarity || '').toLowerCase()">{{ getCardById(item.card_id).rarity }}</span>
+                                    • โดย {{ item.seller_id }}
+                                </div>
+                            </div>
+                            <div class="market-price">
+                                <div class="price-text">🪙 {{ item.price_coins }}</div>
+                                <button v-if="user && item.seller_id !== user.user_id" class="buy-btn" @click="buyMarket(item)">ซื้อเลย</button>
+                                <span v-else class="sub-text" style="font-size:11px;">ของคุณ</span>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <!-- Sell Form (Simple) -->
-                    <div class="mt-8 border-t pt-4">
-                        <h3 class="font-bold mb-2">ตั้งขายการ์ดของคุณ</h3>
-                        <div class="flex space-x-2">
-                            <select v-model="sellSelectedInv" class="border p-2 rounded flex-1">
+
+                    <!-- Sell Form -->
+                    <div class="sell-section">
+                        <h3>ตั้งขายการ์ดของคุณ</h3>
+                        <div class="sell-form">
+                            <select v-model="sellSelectedInv">
                                 <option value="">เลือกการ์ด...</option>
                                 <option v-for="inv in inventory" :value="inv.id">{{ getCardById(inv.card_id).name }}</option>
                             </select>
-                            <input type="number" v-model="sellPrice" placeholder="ราคา" class="border p-2 rounded w-20">
-                            <button @click="sellItem" class="bg-orange-500 text-white px-4 rounded shadow hover:bg-orange-600">ขาย</button>
+                            <input type="number" v-model="sellPrice" placeholder="ราคา">
+                            <button class="sell-btn" @click="sellItem">ขาย</button>
                         </div>
                     </div>
                 </div>
-            </main>
 
-            <!-- Card Detail Modal -->
-            <div v-if="selectedCardModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" @click.self="selectedCardModal = null">
-                <div class="bg-white rounded-xl w-full max-w-sm overflow-hidden shadow-2xl relative">
-                    <button @click="selectedCardModal = null" class="absolute top-2 right-2 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center z-10">&times;</button>
-                    
-                    <img v-if="hasCard(selectedCardModal.card_id)" :src="getDriveImageUrl(selectedCardModal.image_drive_id)" onerror="this.src='https://via.placeholder.com/150?text=Sasam'" class="w-full h-64 object-cover">
-                    <div v-else class="w-full h-64 bg-gray-300 flex items-center justify-center text-gray-500">
-                        <span class="text-4xl">🔒</span>
-                    </div>
+                <!-- 4. GACHA DRAWING -->
+                <div :class="['view-section', { active: currentView === 'gacha' }]">
+                    <div class="section-title">สุ่มซองการ์ดประจำวัน 🎲</div>
+                    <div class="gacha-container">
+                        <p class="sub-text">อัตราสุ่ม: Secret (5%), Rare (25%), Common (70%)</p>
+                        <div class="pack-box" @click="spinGacha">
+                            <div style="font-size: 50px; margin-bottom: 10px;">📦</div>
+                            <div style="font-weight: 700; font-size: 16px;">MEGA PACK</div>
+                            <div style="font-size: 12px; color: var(--accent-green); margin-top: 5px;">50 🪙 / ซอง</div>
+                        </div>
+                        <button class="draw-btn-main" @click="spinGacha" :disabled="loading || (user && user.coins < 50)">
+                            🎲 สุ่มการ์ด (50 เหรียญ)
+                        </button>
 
-                    <div class="p-5">
-                        <div class="flex justify-between items-start mb-2">
-                            <h2 class="text-2xl font-bold">{{ selectedCardModal.name }}</h2>
-                            <span class="px-2 py-1 bg-gray-200 rounded text-xs font-semibold">{{ selectedCardModal.rarity }}</span>
-                        </div>
-                        
-                        <p class="text-sm italic text-gray-600 mb-4">"{{ selectedCardModal.slogan }}"</p>
-                        
-                        <div v-if="hasCard(selectedCardModal.card_id)">
-                            <div class="grid grid-cols-2 gap-2 text-sm mb-4">
-                                <div class="bg-blue-50 p-2 rounded">
-                                    <span class="block text-blue-400 text-xs">พลังท่องเที่ยว</span>
-                                    <span class="font-bold">{{ selectedCardModal.stat_tourism }}</span>
-                                </div>
-                                <div class="bg-orange-50 p-2 rounded">
-                                    <span class="block text-orange-400 text-xs">พลังวัฒนธรรม</span>
-                                    <span class="font-bold">{{ selectedCardModal.stat_culture }}</span>
-                                </div>
-                            </div>
-                            <a :href="selectedCardModal.attraction_url" target="_blank" class="block w-full text-center bg-blue-100 text-blue-700 py-2 rounded font-semibold hover:bg-blue-200">
-                                ข้อมูลสถานที่ท่องเที่ยว
-                            </a>
-                        </div>
-                        <div v-else class="text-center text-red-500 text-sm mt-4">
-                            คุณยังไม่มีการ์ดใบนี้
+                        <div class="gacha-actions">
+                            <button class="gacha-side-btn" @click="mockGPSCheckIn">
+                                <span class="icon">📍</span>
+                                <span class="label">Check-in GPS</span>
+                                <span class="desc">จำลองรับการ์ดเชียงใหม่</span>
+                            </button>
+                            <button class="gacha-side-btn" @click="playQuiz">
+                                <span class="icon">🧠</span>
+                                <span class="label">ทายปัญหา</span>
+                                <span class="desc">ตอบถูก +20 🪙</span>
+                            </button>
                         </div>
                     </div>
                 </div>
+
+                <!-- 5. PORTFOLIO & STATS -->
+                <div :class="['view-section', { active: currentView === 'stats' }]">
+                    <div class="section-title">พอร์ตสะสมการ์ด</div>
+                    <div class="portfolio-card">
+                        <div class="total-val-title">จำนวนการ์ดที่สะสมได้</div>
+                        <div class="total-val-amount">{{ inventory.length }} ใบ</div>
+                        <div class="val-change">จากทั้งหมด {{ cards.length }} ใบ</div>
+
+                        <div class="chart-placeholder">
+                            <div class="chart-bar" style="height: 30%;"></div>
+                            <div class="chart-bar" style="height: 45%;"></div>
+                            <div class="chart-bar" style="height: 35%;"></div>
+                            <div class="chart-bar" style="height: 60%;"></div>
+                            <div class="chart-bar" style="height: 80%;"></div>
+                            <div class="chart-bar active" :style="{ height: completionPercent + '%' }"></div>
+                        </div>
+                    </div>
+
+                    <div class="section-title" style="font-size: 16px; margin-top: 20px;">สถิติการสะสม</div>
+                    <div class="stat-card">
+                        <div class="stat-label">อัตราความสำเร็จ</div>
+                        <div class="stat-value">{{ completionPercent }}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">เหรียญคงเหลือ</div>
+                        <div class="stat-value">🪙 {{ user ? user.coins : 0 }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">ชื่อผู้เล่น</div>
+                        <div class="stat-value">{{ user ? user.display_name : '-' }}</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Navigation Bar -->
+            <div class="bottom-nav">
+                <button :class="['nav-item', { active: activeNav === 'hub' }]" @click="switchNav('hub')">
+                    <span class="icon">🖼️</span>
+                    <span>คอลเลกชัน</span>
+                </button>
+                <button :class="['nav-item', { active: activeNav === 'market' }]" @click="switchNav('market')">
+                    <span class="icon">🛒</span>
+                    <span>ตลาด Live</span>
+                </button>
+                <div class="nav-center-btn" @click="switchNav('gacha')">🎲</div>
+                <button :class="['nav-item', { active: activeNav === 'gacha' }]" @click="switchNav('gacha')">
+                    <span class="icon">🎁</span>
+                    <span>สุ่มการ์ด</span>
+                </button>
+                <button :class="['nav-item', { active: activeNav === 'stats' }]" @click="switchNav('stats')">
+                    <span class="icon">📊</span>
+                    <span>พอร์ต</span>
+                </button>
             </div>
         </div>
 
+        <!-- Card Detail / Reveal Modal -->
+        <div :class="['modal-overlay', { active: selectedCardModal !== null }]" @click.self="selectedCardModal = null">
+            <div class="modal-box" v-if="selectedCardModal">
+                <button class="close-modal" @click="selectedCardModal = null">✕</button>
+                <div>
+                    <span :class="'rarity-badge ' + (selectedCardModal.rarity || '').toLowerCase()">{{ selectedCardModal.rarity }}</span>
+                </div>
+                <img :src="getDriveImageUrl(selectedCardModal.image_drive_id)"
+                     :class="['modal-card-img', { 'locked-img': !hasCard(selectedCardModal.card_id) }]"
+                     onerror="this.src='https://picsum.photos/200/280?random=' + Math.floor(Math.random()*999)">
+                <h3 style="font-size:18px;">{{ selectedCardModal.name }}</h3>
+                <p v-if="modalMessage" class="sub-text" style="margin-top:4px; color: var(--accent-green); font-weight:600;">{{ modalMessage }}</p>
+                <p v-else class="sub-text" style="margin-top:4px;">"{{ selectedCardModal.slogan }}"</p>
+
+                <div v-if="hasCard(selectedCardModal.card_id)" class="modal-stats">
+                    <div class="modal-stat-box tourism">
+                        <div class="label">พลังท่องเที่ยว</div>
+                        <div class="value">{{ selectedCardModal.stat_tourism }}</div>
+                    </div>
+                    <div class="modal-stat-box culture">
+                        <div class="label">พลังวัฒนธรรม</div>
+                        <div class="value">{{ selectedCardModal.stat_culture }}</div>
+                    </div>
+                </div>
+                <div v-else style="margin-top:12px;">
+                    <p class="sub-text">🔒 คุณยังไม่มีการ์ดใบนี้</p>
+                </div>
+
+                <a v-if="hasCard(selectedCardModal.card_id) && selectedCardModal.attraction_url && selectedCardModal.attraction_url !== '#'"
+                   :href="selectedCardModal.attraction_url" target="_blank" class="draw-btn-main" style="display:block; margin-top:15px; padding:12px; font-size:14px; text-decoration:none;">
+                    ข้อมูลสถานที่ท่องเที่ยว
+                </a>
+                <button v-else class="draw-btn-main" style="margin-top:15px; padding:12px; font-size:14px;" @click="selectedCardModal = null">ตกลง</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Custom JS -->
     <script src="app.js"></script>
 </body>
 </html>
