@@ -23,7 +23,7 @@
                 </div>
                 <div class="header-actions">
                     <div class="balance-badge">
-                        🪙 <span>{{ user ? user.coins : 0 }}</span>
+                        🪙 <span>{{ user ? (user.coins || 0) : 0 }}</span>
                     </div>
                     <img v-if="profilePic" :src="profilePic" class="user-avatar" @click="logout" title="ออกจากระบบ">
                     <div v-else class="user-avatar-placeholder" @click="logout" title="ออกจากระบบ">👤</div>
@@ -40,12 +40,36 @@
                         <span class="sub-text">{{ inventory.length }}/{{ cards.length }} การ์ด</span>
                     </div>
 
-                    <div class="category-card cat-77" @click="openAlbum('77-provinces', '🗺️ อัลบั้ม 77 จังหวัด')">
+                    <div class="category-card cat-2569" @click="openAlbum('', '🗺️ การ์ดทั้งหมดในระบบ')">
                         <div class="category-info">
-                            <h3>🗺️ อัลบั้ม 77 จังหวัด</h3>
-                            <p>สะสมสถานที่และแลนด์มาร์กทั่วไทย</p>
+                            <h3>🗺️ การ์ดทั้งหมด (All Cards)</h3>
+                            <p>คอลเลกชันการ์ดทั้งหมดในระบบสะสม</p>
                         </div>
-                        <div class="category-badge">{{ countByRegion('') }}/{{ cards.length }}</div>
+                        <div class="category-badge">{{ countByRegion('') }}</div>
+                    </div>
+
+                    <div class="category-card cat-77" @click="openAlbum('Central', '🏛️ ภาคกลาง & กรุงเทพฯ')">
+                        <div class="category-info">
+                            <h3>🏛️ ภาคกลาง (Central)</h3>
+                            <p>สถานที่ท่องเที่ยวและแลนด์มาร์กภาคกลาง</p>
+                        </div>
+                        <div class="category-badge">{{ countByRegion('Central') }}</div>
+                    </div>
+
+                    <div class="category-card cat-90s" @click="openAlbum('North', '⛰️ ภาคเหนือ')">
+                        <div class="category-info">
+                            <h3>⛰️ ภาคเหนือ (North)</h3>
+                            <p>สถานที่ท่องเที่ยวและแลนด์มาร์กภาคเหนือ</p>
+                        </div>
+                        <div class="category-badge">{{ countByRegion('North') }}</div>
+                    </div>
+
+                    <div class="category-card cat-77" @click="openAlbum('South', '🏖️ ภาคใต้')">
+                        <div class="category-info">
+                            <h3>🏖️ ภาคใต้ (South)</h3>
+                            <p>สถานที่ท่องเที่ยวและแลนด์มาร์กภาคใต้</p>
+                        </div>
+                        <div class="category-badge">{{ countByRegion('South') }}</div>
                     </div>
                 </div>
 
@@ -55,14 +79,14 @@
                         <button class="back-btn" @click="currentView = 'hub'">←</button>
                         <div>
                             <h2 style="font-size:18px;">{{ albumTitle }}</h2>
-                            <p class="sub-text">{{ inventory.length }}/{{ cards.length }} การ์ดครอบครอง</p>
+                            <p class="sub-text">{{ countByRegion(selectedRegion) }} การ์ดครอบครอง</p>
                         </div>
                     </div>
                     <div class="card-grid">
-                        <div v-for="card in cards" :key="card.card_id"
+                        <div v-for="card in filteredCards()" :key="card.card_id"
                              :class="['card-item', hasCard(card.card_id) ? 'unlocked' : 'locked']"
                              @click="openCardModal(card)">
-                            <img :src="getDriveImageUrl(card.image_drive_id)" :alt="card.name" onerror="this.src='https://picsum.photos/200/280?random=' + Math.floor(Math.random()*999)">
+                            <img :src="getDriveImageUrl(card.image_drive_id)" :alt="card.name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
                             <div class="card-name">{{ card.name }}</div>
                             <div class="card-id">#{{ card.card_id }}</div>
                         </div>
@@ -82,7 +106,7 @@
                             <p class="sub-text">ยังไม่มีการ์ดวางขายในตลาด</p>
                         </div>
                         <div v-for="item in filteredMarketplace" :key="item.listing_id" class="market-item">
-                            <img :src="getDriveImageUrl(getCardById(item.card_id).image_drive_id)" :alt="getCardById(item.card_id).name" onerror="this.src='https://picsum.photos/200/280?random=' + Math.floor(Math.random()*999)">
+                            <img :src="getDriveImageUrl(getCardById(item.card_id).image_drive_id)" :alt="getCardById(item.card_id).name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
                             <div class="market-details">
                                 <div class="market-title">{{ getCardById(item.card_id).name }}</div>
                                 <div class="market-sub">
@@ -207,7 +231,7 @@
                 </div>
                 <img :src="getDriveImageUrl(selectedCardModal.image_drive_id)"
                      :class="['modal-card-img', { 'locked-img': !hasCard(selectedCardModal.card_id) }]"
-                     onerror="this.src='https://picsum.photos/200/280?random=' + Math.floor(Math.random()*999)">
+                     onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
                 <h3 style="font-size:18px;">{{ selectedCardModal.name }}</h3>
                 <p v-if="modalMessage" class="sub-text" style="margin-top:4px; color: var(--accent-green); font-weight:600;">{{ modalMessage }}</p>
                 <p v-else class="sub-text" style="margin-top:4px;">"{{ selectedCardModal.slogan }}"</p>

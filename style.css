@@ -39,6 +39,7 @@ body {
 .app-container {
     width: 100%;
     max-width: 430px;
+    height: 100vh;
     min-height: 100vh;
     background-color: var(--bg-main);
     border-radius: 0;
@@ -240,6 +241,7 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
+    align-items: stretch;
 }
 
 .card-item {
@@ -252,6 +254,12 @@ body {
     overflow: hidden;
     transition: all 0.2s ease;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+    min-height: 150px;
 }
 
 .card-item:hover {
@@ -273,6 +281,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    width: 100%;
 }
 
 .card-item .card-id {
@@ -397,6 +406,7 @@ body {
 .market-item img {
     width: 50px;
     height: 68px;
+    aspect-ratio: 3/4;
     object-fit: cover;
     border-radius: 6px;
 }
@@ -715,6 +725,7 @@ body {
 .modal-card-img {
     width: 160px;
     height: 220px;
+    aspect-ratio: 3/4;
     object-fit: cover;
     border-radius: var(--radius-md);
     margin: 15px auto;
@@ -782,7 +793,7 @@ body {
 
 .rarity-badge.common { background: rgba(140, 155, 165, 0.2); color: #8c9ba5; }
 .rarity-badge.rare { background: rgba(96, 239, 255, 0.15); color: var(--accent-cyan); }
-.rarity-badge.secret { background: rgba(255, 184, 0, 0.15); color: var(--accent-yellow); }
+.rarity-badge.secret, .rarity-badge.ssr { background: rgba(255, 184, 0, 0.15); color: var(--accent-yellow); }
 
 /* ==================== Login Page ==================== */
 .login-container {
@@ -790,22 +801,24 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    flex: 1;
+    width: 100%;
+    height: 100%;
     padding: 20px;
 }
 
 .login-box {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    padding: 40px 30px;
+    padding: 40px 24px;
     border-radius: var(--radius-lg);
     width: 100%;
-    max-width: 380px;
+    max-width: 360px;
     text-align: center;
 }
 
 .login-box h1 {
-    font-size: 36px;
+    font-size: 34px;
     font-weight: 700;
     margin-bottom: 4px;
 }
@@ -814,8 +827,8 @@ body {
 
 .login-box .tagline {
     color: var(--text-sub);
-    font-size: 14px;
-    margin-bottom: 30px;
+    font-size: 13px;
+    margin-bottom: 25px;
 }
 
 .login-line-btn {
@@ -903,7 +916,7 @@ body {
 
 /* ==================== Loading ==================== */
 .loading-overlay {
-    position: fixed;
+    position: absolute;
     inset: 0;
     background: rgba(11, 14, 20, 0.85);
     z-index: 200;

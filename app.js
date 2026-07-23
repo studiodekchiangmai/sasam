@@ -14,6 +14,7 @@ createApp({
             currentView: 'hub',
             activeNav: 'hub',
             albumTitle: '',
+            selectedRegion: '',
             loading: true,
             gachaResult: null,
             selectedCardModal: null,
@@ -67,12 +68,21 @@ createApp({
             this.currentView = view;
             if (view === 'market') this.loadMarketplace();
         },
-        openAlbum(categoryKey, title) {
-            this.albumTitle = title || 'อัลบั้ม';
+        openAlbum(regionKey, title) {
+            this.selectedRegion = regionKey;
+            this.albumTitle = title || 'อัลบั้มการ์ด';
             this.currentView = 'album';
         },
-        countByRegion() {
-            return this.inventory.length;
+        filteredCards() {
+            if (!this.selectedRegion) return this.cards;
+            return this.cards.filter(c => c.region === this.selectedRegion || c.category === this.selectedRegion);
+        },
+        countByRegion(regionKey) {
+            const regionCards = !regionKey 
+                ? this.cards 
+                : this.cards.filter(c => c.region === regionKey || c.category === regionKey);
+            const owned = regionCards.filter(c => this.hasCard(c.card_id)).length;
+            return `${owned}/${regionCards.length}`;
         },
 
         // Auth
@@ -85,7 +95,7 @@ createApp({
             window.location.href = 'login.html';
         },
 
-        // API
+        // API Connection
         async apiCall(action, payload = {}) {
             if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
                 console.warn("API_URL is not set. Using mock behavior.");
@@ -113,11 +123,13 @@ createApp({
                 return;
             }
 
+            // 1. Fetch Cards
             const cardsRes = await this.apiCall('getCards');
             if (cardsRes && cardsRes.cards) this.cards = cardsRes.cards;
 
+            // 2. Fetch User & Inventory
             if (this.user) {
-                const userRes = await this.apiCall('getUserData', { userId: this.user.user_id, display_name: this.user.display_name });
+                const userRes = await this.apiCall('getUserData', { userId: this.user.user_id, displayName: this.user.display_name });
                 if (userRes && userRes.user) {
                     this.user = userRes.user;
                     localStorage.setItem('sasam_user', JSON.stringify(this.user));
@@ -127,6 +139,7 @@ createApp({
                 if (invRes && invRes.inventory) this.inventory = invRes.inventory;
             }
 
+            // 3. Fetch Marketplace
             await this.loadMarketplace();
             this.loading = false;
         },
@@ -144,8 +157,9 @@ createApp({
             return this.cards.find(c => c.card_id === cardId) || { name: '???', rarity: '', image_drive_id: '' };
         },
         getDriveImageUrl(driveId) {
-            if (!driveId || driveId === "1A2B3C4D5E6F7G8H9I") {
-                return 'https://picsum.photos/200/280?random=' + Math.floor(Math.random() * 999);
+            if (!driveId || driveId === "1A2B3C4D5E6F7G8H9I" || driveId.startsWith("http")) {
+                if (driveId && driveId.startsWith("http")) return driveId;
+                return 'https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam';
             }
             return `https://drive.google.com/uc?export=view&id=${driveId}`;
         },
@@ -169,7 +183,6 @@ createApp({
                 this.gachaResult = res.obtained;
                 this.user.coins = res.coins;
                 localStorage.setItem('sasam_user', JSON.stringify(this.user));
-                // Show result in modal
                 this.modalMessage = '🎉 ยินดีด้วย! คุณได้รับการ์ดใหม่!';
                 this.selectedCardModal = res.obtained;
                 await this.fetchData();
@@ -240,7 +253,7 @@ createApp({
             this.loading = false;
         },
 
-        // Mock Data
+        // Fallback Mock Data
         loadMockData() {
             if (this.user) {
                 this.user.coins = 1000;

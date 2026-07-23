@@ -1,4 +1,5 @@
-const LIFF_ID = "YOUR_LIFF_ID_HERE"; // Replace with your LIFF ID (Optional for testing in browser)
+const API_URL = "https://script.google.com/macros/s/AKfycbw9jnudlYoLv9q704VwyG6hmQHQc4u5291_QcbbOKZeyLMSJymdbEJ7giHUaThBobBR/exec";
+const LIFF_ID = "YOUR_LIFF_ID_HERE";
 
 const { createApp } = Vue;
 
@@ -31,13 +32,43 @@ createApp({
         this.loading = false;
     },
     methods: {
+        async apiCall(action, payload = {}) {
+            if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") return null;
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action, payload }),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                });
+                return await response.json();
+            } catch (e) {
+                console.error("API Error", e);
+                return null;
+            }
+        },
+
         async handleLINELogin() {
             this.loading = true;
-            const profile = await liff.getProfile();
-            const user = { user_id: profile.userId, display_name: profile.displayName };
-            localStorage.setItem('sasam_user', JSON.stringify(user));
-            window.location.href = 'index.html';
+            try {
+                const profile = await liff.getProfile();
+                const userId = profile.userId;
+                const displayName = profile.displayName;
+
+                // Register/Fetch user from GAS Google Sheets
+                let userData = { user_id: userId, display_name: displayName, coins: 500 };
+                const res = await this.apiCall('getUserData', { userId: userId, displayName: displayName });
+                if (res && res.user) {
+                    userData = res.user;
+                }
+
+                localStorage.setItem('sasam_user', JSON.stringify(userData));
+                window.location.href = 'index.html';
+            } catch (e) {
+                console.error("LINE Login Error", e);
+                this.loading = false;
+            }
         },
+
         async loginWithLINE() {
             if (LIFF_ID === "YOUR_LIFF_ID_HERE") {
                 alert("กรุณาตั้งค่า LIFF ID ก่อนใช้งานฟีเจอร์ล็อกอินด้วย LINE");
@@ -49,13 +80,21 @@ createApp({
                 await this.handleLINELogin();
             }
         },
-        loginManually() {
-            if (!this.loginUsername.trim()) return alert("กรุณากรอกชื่อผู้ใช้งาน");
-            
+
+        async loginManually() {
             const username = this.loginUsername.trim();
-            const user = { user_id: username, display_name: username };
+            if (!username) return alert("กรุณากรอกชื่อผู้ใช้งาน");
             
-            localStorage.setItem('sasam_user', JSON.stringify(user));
+            this.loading = true;
+
+            // Connect to GAS Google Sheets to fetch/register user
+            let userData = { user_id: username, display_name: username, coins: 500 };
+            const res = await this.apiCall('getUserData', { userId: username, displayName: username });
+            if (res && res.user) {
+                userData = res.user;
+            }
+            
+            localStorage.setItem('sasam_user', JSON.stringify(userData));
             window.location.href = 'index.html';
         }
     }
