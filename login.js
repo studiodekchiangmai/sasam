@@ -96,6 +96,16 @@ createApp({
             
             localStorage.setItem('sasam_user', JSON.stringify(userData));
             window.location.href = 'index.html';
+        },
+
+        loginAsTest() {
+            const testUser = {
+                user_id: 'test_user',
+                display_name: 'ผู้ทดสอบระบบ',
+                coins: 9999
+            };
+            localStorage.setItem('sasam_user', JSON.stringify(testUser));
+            window.location.href = 'index.html';
         }
     }
 }).mount('#login-app');

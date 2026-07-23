@@ -33,6 +33,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    min-height: 100dvh;
     padding: 0;
     margin: 0;
 }
@@ -49,7 +50,9 @@ body {
 .app-container {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     min-height: 100vh;
+    min-height: 100dvh;
     background-color: var(--bg-main);
     border-radius: 0;
     overflow: hidden;
@@ -980,3 +983,18 @@ body {
 /* ==================== Utilities ==================== */
 .hidden { display: none !important; }
 .text-accent { color: var(--accent-green); }
+
+/* ==================== Test Login Link ==================== */
+.test-login-link {
+    display: inline-block;
+    margin-top: 16px;
+    color: var(--text-sub);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    cursor: pointer;
+}
+.test-login-link:hover {
+    color: var(--accent-cyan);
+    text-decoration: underline;
+}
