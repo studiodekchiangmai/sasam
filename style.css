@@ -1,0 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+body { font-family: 'Kanit', sans-serif; background-color: #f3f4f6; }
+.card-locked { filter: grayscale(100%) brightness(50%) contrast(150%); opacity: 0.8; }
+.gacha-btn { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
