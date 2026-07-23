@@ -1,4 +1,4 @@
-const API_URL = "YOUR_GAS_WEB_APP_URL_HERE"; // Replace with your deployed Web App URL
+const API_URL = "https://script.google.com/macros/s/AKfycbw9jnudlYoLv9q704VwyG6hmQHQc4u5291_QcbbOKZeyLMSJymdbEJ7giHUaThBobBR/exec"; // Replace with your deployed Web App URL
 const LIFF_ID = "YOUR_LIFF_ID_HERE"; // Replace with your LIFF ID (Optional for testing in browser)
 
 const { createApp } = Vue;
