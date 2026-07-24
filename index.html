@@ -131,7 +131,7 @@
                             <p class="sub-text">ยังไม่มีการ์ดวางขายในตลาด</p>
                         </div>
                         <div v-for="item in filteredMarketplace" :key="item.listing_id" class="market-item">
-                            <img :src="getDriveImageUrl(getCardById(item.card_id).image_drive_id)" :alt="getCardById(item.card_id).name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
+                            <img loading="lazy" :src="getDriveImageUrl(getCardById(item.card_id).image_drive_id)" :alt="getCardById(item.card_id).name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
                             <div class="market-details">
                                 <div class="market-title">{{ getCardById(item.card_id).name }}</div>
                                 <div class="market-sub">
@@ -308,7 +308,7 @@
                         <div v-for="card in filteredCards()" :key="card.card_id"
                              :class="['card-item', hasCard(card.card_id) ? 'unlocked' : 'locked']"
                              @click="openCardModal(card)">
-                            <img :src="getDriveImageUrl(card.image_drive_id)" :alt="card.name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
+                            <img loading="lazy" :src="getDriveImageUrl(card.image_drive_id)" :alt="card.name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
                             <div class="card-name">{{ card.name }}</div>
                             <div class="card-id">#{{ card.card_id }}</div>
                         </div>
@@ -441,7 +441,7 @@
                 <div>
                     <span :class="'rarity-badge ' + (selectedCardModal.rarity || '').toLowerCase()">{{ selectedCardModal.rarity }}</span>
                 </div>
-                <img :src="getDriveImageUrl(selectedCardModal.image_drive_id)"
+                <img loading="lazy" :src="getDriveImageUrl(selectedCardModal.image_drive_id)"
                      :class="['modal-card-img', { 'locked-img': !hasCard(selectedCardModal.card_id) }]"
                      onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
                 <h3 style="font-size:18px;">{{ selectedCardModal.name }}</h3>

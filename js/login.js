@@ -47,25 +47,24 @@ createApp({
             }
         },
 
+        async processLogin(userId, displayName) {
+            let userData = { user_id: userId, display_name: displayName, coins: 500 };
+            const res = await this.apiCall('authLogin', { userId: userId, displayName: displayName });
+            if (res && res.user) {
+                userData = res.user;
+            }
+            if (res && res.token) {
+                localStorage.setItem('sasam_token', res.token);
+            }
+            localStorage.setItem('sasam_user', JSON.stringify(userData));
+            window.location.href = 'index.html';
+        },
+
         async handleLINELogin() {
             this.loading = true;
             try {
                 const profile = await liff.getProfile();
-                const userId = profile.userId;
-                const displayName = profile.displayName;
-
-                // Register/Fetch user from GAS Google Sheets and get Token
-                let userData = { user_id: userId, display_name: displayName, coins: 500 };
-                const res = await this.apiCall('authLogin', { userId: userId, displayName: displayName });
-                if (res && res.user) {
-                    userData = res.user;
-                }
-                if (res && res.token) {
-                    localStorage.setItem('sasam_token', res.token);
-                }
-
-                localStorage.setItem('sasam_user', JSON.stringify(userData));
-                window.location.href = 'index.html';
+                await this.processLogin(profile.userId, profile.displayName);
             } catch (e) {
                 console.error("LINE Login Error", e);
                 this.loading = false;
@@ -89,19 +88,7 @@ createApp({
             if (!username) return alert("กรุณากรอกชื่อผู้ใช้งาน");
             
             this.loading = true;
-
-            // Connect to GAS Google Sheets to fetch/register user and get token
-            let userData = { user_id: username, display_name: username, coins: 500 };
-            const res = await this.apiCall('authLogin', { userId: username, displayName: username });
-            if (res && res.user) {
-                userData = res.user;
-            }
-            if (res && res.token) {
-                localStorage.setItem('sasam_token', res.token);
-            }
-            
-            localStorage.setItem('sasam_user', JSON.stringify(userData));
-            window.location.href = 'index.html';
+            await this.processLogin(username, username);
         },
 
         loginAsTest() {
