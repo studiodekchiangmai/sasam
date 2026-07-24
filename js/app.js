@@ -12,9 +12,12 @@ createApp({
             collections: [],
             inventory: [],
             marketplace: [],
-            currentView: 'hub',
-            activeNav: 'hub',
+            currentView: 'home',
+            activeNav: 'home',
+            // Profile sub-views: 'portfolio' | 'stats' | 'settings'
+            profileSubView: 'portfolio',
             albumTitle: '',
+            albumIcon: '',
             selectedCollection: '',
             selectedCollectionForGacha: '77THCC',
             loading: true,
@@ -23,13 +26,22 @@ createApp({
             modalMessage: '',
             sellSelectedInv: "",
             sellPrice: 100,
-            marketSearch: ""
+            marketSearch: "",
+            toasts: [],
+            toastIdCounter: 0,
+            gachaHistory: [],
+            showGachaAnim: false,
+            showFeedbackModal: false,
+            feedbackData: { rating: 0, text: '' }
         }
     },
     computed: {
+        uniqueOwnedCount() {
+            return this.cards.filter(c => this.hasCard(c.card_id)).length;
+        },
         completionPercent() {
             if (this.cards.length === 0) return 0;
-            return Math.round((this.inventory.length / this.cards.length) * 100);
+            return Math.round((this.uniqueOwnedCount / this.cards.length) * 100);
         },
         filteredMarketplace() {
             if (!this.marketSearch) return this.marketplace;
@@ -42,7 +54,8 @@ createApp({
     },
     async mounted() {
         const savedUser = localStorage.getItem('sasam_user');
-        if (!savedUser) {
+        const token = localStorage.getItem('sasam_token');
+        if (!savedUser || !token) {
             window.location.href = 'login.html';
             return;
         }
@@ -65,13 +78,86 @@ createApp({
     },
     methods: {
         // Navigation
-        switchNav(view) {
+        async switchNav(view) {
             this.activeNav = view;
             this.currentView = view;
-            if (view === 'market') this.loadMarketplace();
+            
+            // Reset sub-view when switching main nav
+            if (view === 'profile') this.profileSubView = 'portfolio';
+
+            this.loading = true;
+            try {
+                if (view === 'home') await this.loadHomeData();
+                else if (view === 'market') await this.loadMarketData();
+                else if (view === 'gacha') await this.loadGachaData();
+                else if (view === 'collection') await this.loadCollectionData();
+                else if (view === 'profile') await this.loadProfileData();
+                else if (view === 'album') await this.loadCollectionData(); // album shares collection data
+            } catch (e) {
+                console.error("Error loading tab data", e);
+            }
+            this.loading = false;
         },
-        openAlbum(collectionId, title) {
+
+        async loadHomeData() {
+            const promises = [];
+            if (this.user) promises.push(this.apiCall('getUserData').then(res => { if(res && res.user) this.user = res.user; }));
+            if (this.cards.length === 0) promises.push(this.apiCall('getCards').then(res => { if(res && res.cards) this.cards = res.cards; }));
+            if (this.collections.length === 0) promises.push(this.apiCall('getCollections').then(res => { 
+                if(res && res.collections) {
+                    this.collections = res.collections;
+                    if (this.collections.length > 0 && !this.selectedCollectionForGacha) {
+                        this.selectedCollectionForGacha = this.collections[0].collection_id;
+                    }
+                }
+            }));
+            if (this.user && this.inventory.length === 0) promises.push(this.apiCall('getUserInventory').then(res => { if(res && res.inventory) this.inventory = res.inventory; }));
+            await Promise.all(promises);
+        },
+
+        async loadMarketData() {
+            const promises = [this.apiCall('getMarketplace').then(res => { if(res && res.marketplace) this.marketplace = res.marketplace; })];
+            if (this.cards.length === 0) promises.push(this.apiCall('getCards').then(res => { if(res && res.cards) this.cards = res.cards; }));
+            if (this.user) promises.push(this.apiCall('getUserData').then(res => { if(res && res.user) this.user = res.user; }));
+            await Promise.all(promises);
+        },
+
+        async loadGachaData() {
+            const promises = [];
+            if (this.collections.length === 0) promises.push(this.apiCall('getCollections').then(res => { 
+                if(res && res.collections) {
+                    this.collections = res.collections;
+                    if (this.collections.length > 0 && !this.selectedCollectionForGacha) {
+                        this.selectedCollectionForGacha = this.collections[0].collection_id;
+                    }
+                } 
+            }));
+            if (this.user) promises.push(this.apiCall('getUserData').then(res => { if(res && res.user) this.user = res.user; }));
+            await Promise.all(promises);
+        },
+
+        async loadCollectionData() {
+            const promises = [];
+            if (this.collections.length === 0) promises.push(this.apiCall('getCollections').then(res => { if(res && res.collections) this.collections = res.collections; }));
+            if (this.cards.length === 0) promises.push(this.apiCall('getCards').then(res => { if(res && res.cards) this.cards = res.cards; }));
+            if (this.user) promises.push(this.apiCall('getUserInventory').then(res => { if(res && res.inventory) this.inventory = res.inventory; }));
+            await Promise.all(promises);
+        },
+
+        async loadProfileData() {
+            const promises = [];
+            if (this.user) {
+                promises.push(this.apiCall('getUserData').then(res => { if(res && res.user) this.user = res.user; }));
+                promises.push(this.apiCall('getUserInventory').then(res => { if(res && res.inventory) this.inventory = res.inventory; }));
+            }
+            if (this.cards.length === 0) promises.push(this.apiCall('getCards').then(res => { if(res && res.cards) this.cards = res.cards; }));
+            if (this.collections.length === 0) promises.push(this.apiCall('getCollections').then(res => { if(res && res.collections) this.collections = res.collections; }));
+            promises.push(this.apiCall('getMarketplace').then(res => { if(res && res.marketplace) this.marketplace = res.marketplace; }));
+            await Promise.all(promises);
+        },
+        openAlbum(collectionId, icon, title) {
             this.selectedCollection = collectionId;
+            this.albumIcon = icon || '';
             this.albumTitle = title || 'อัลบั้มการ์ด';
             this.currentView = 'album';
         },
@@ -86,11 +172,22 @@ createApp({
             const owned = collectionCards.filter(c => this.hasCard(c.card_id)).length;
             return `${owned}/${collectionCards.length}`;
         },
+        collectionPercent(collectionId) {
+            const collectionCards = this.cards.filter(c => c.collection_id === collectionId);
+            if (collectionCards.length === 0) return 0;
+            const owned = collectionCards.filter(c => this.hasCard(c.card_id)).length;
+            return Math.round((owned / collectionCards.length) * 100);
+        },
+        collectionOwnedCount(collectionId) {
+            const collectionCards = this.cards.filter(c => c.collection_id === collectionId);
+            return collectionCards.filter(c => this.hasCard(c.card_id)).length;
+        },
 
         // Auth
         logout() {
             if (!confirm('ต้องการออกจากระบบหรือไม่?')) return;
             localStorage.removeItem('sasam_user');
+            localStorage.removeItem('sasam_token');
             if (typeof liff !== 'undefined' && LIFF_ID !== "YOUR_LIFF_ID_HERE" && liff.isLoggedIn()) {
                 liff.logout();
             }
@@ -103,6 +200,10 @@ createApp({
                 console.warn("API_URL is not set. Using mock behavior.");
                 return null;
             }
+            const token = localStorage.getItem('sasam_token');
+            if (token) {
+                payload.token = token;
+            }
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -112,51 +213,17 @@ createApp({
                 return await response.json();
             } catch (e) {
                 console.error("API Error", e);
-                alert("การเชื่อมต่อ API ล้มเหลว");
+                this.showToast("การเชื่อมต่อ API ล้มเหลว", "error");
                 return null;
             }
         },
 
         async fetchData() {
-            this.loading = true;
             if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
-                this.loadMockData();
-                this.loading = false;
+                this.showToast("โปรดตั้งค่า API_URL ก่อนใช้งาน", "error");
                 return;
             }
-
-            // 1. Fetch Collections & Cards
-            const colRes = await this.apiCall('getCollections');
-            if (colRes && colRes.collections) {
-                this.collections = colRes.collections;
-                if (this.collections.length > 0) {
-                    this.selectedCollectionForGacha = this.collections[0].collection_id;
-                }
-            }
-
-            const cardsRes = await this.apiCall('getCards');
-            if (cardsRes && cardsRes.cards) this.cards = cardsRes.cards;
-
-            // 2. Fetch User & Inventory
-            if (this.user) {
-                const userRes = await this.apiCall('getUserData', { userId: this.user.user_id, displayName: this.user.display_name });
-                if (userRes && userRes.user) {
-                    this.user = userRes.user;
-                    localStorage.setItem('sasam_user', JSON.stringify(this.user));
-                }
-
-                const invRes = await this.apiCall('getUserInventory', { userId: this.user.user_id });
-                if (invRes && invRes.inventory) this.inventory = invRes.inventory;
-            }
-
-            // 3. Fetch Marketplace
-            await this.loadMarketplace();
-            this.loading = false;
-        },
-
-        async loadMarketplace() {
-            const mktRes = await this.apiCall('getMarketplace');
-            if (mktRes && mktRes.marketplace) this.marketplace = mktRes.marketplace;
+            await this.switchNav(this.currentView);
         },
 
         // Helpers
@@ -186,109 +253,97 @@ createApp({
         // Gacha
         async spinGacha() {
             if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
-                alert("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้");
+                this.showToast("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้", "error");
+                return;
+            }
+            if (this.user && this.user.coins < 50) {
+                this.showToast("เหรียญไม่พอ", "error");
                 return;
             }
             this.loading = true;
             this.gachaResult = null;
-            const res = await this.apiCall('gachaSpin', { userId: this.user.user_id, collectionId: this.selectedCollectionForGacha });
+            const res = await this.apiCall('gachaSpin', { collectionId: this.selectedCollectionForGacha });
             if (res && res.status === 'success') {
-                this.gachaResult = res.obtained;
-                this.user.coins = res.coins;
-                localStorage.setItem('sasam_user', JSON.stringify(this.user));
-                this.modalMessage = '🎉 ยินดีด้วย! คุณได้รับการ์ดใหม่!';
-                this.selectedCardModal = res.obtained;
-                await this.fetchData();
-            } else if (res) {
-                alert("Error: " + res.error);
-            }
-            this.loading = false;
-        },
+                this.loading = false;
+                
+                // Play Gacha Animation
+                this.showGachaAnim = true;
+                setTimeout(async () => {
+                    this.showGachaAnim = false;
+                    
+                    // Add to history
+                    const historyItem = { ...res.obtained, date: new Date().toISOString() };
+                    this.gachaHistory.unshift(historyItem);
+                    if (this.gachaHistory.length > 5) this.gachaHistory.pop();
 
-        // GPS Check-in
-        async mockGPSCheckIn() {
-            if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
-                alert("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้");
-                return;
-            }
-            this.loading = true;
-            const res = await this.apiCall('checkInGPS', { userId: this.user.user_id, cardId: 'TH-50', lat: 18.788, lng: 98.985 });
-            if (res && res.status === 'success') {
-                alert(res.message);
-                await this.fetchData();
-            }
-            this.loading = false;
-        },
-
-        // Quiz
-        async playQuiz() {
-            if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
-                alert("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้");
-                return;
-            }
-            const ans = confirm("ทายปัญหา: ดอยอินทนนท์ อยู่จังหวัดอะไร?\nกด OK = เชียงใหม่, Cancel = กรุงเทพ");
-            this.loading = true;
-            const res = await this.apiCall('submitQuiz', { userId: this.user.user_id, isCorrect: ans });
-            if (res && res.status === 'success') {
-                alert(res.message);
-                if (res.coins) {
+                    this.gachaResult = res.obtained;
                     this.user.coins = res.coins;
                     localStorage.setItem('sasam_user', JSON.stringify(this.user));
-                }
+                    this.modalMessage = '<i class="fa-solid fa-gift"></i> ยินดีด้วย! คุณได้รับการ์ดใหม่!';
+                    this.selectedCardModal = res.obtained;
+                    await this.fetchData();
+                }, 2000); // Wait for animation
+
+            } else if (res) {
+                this.loading = false;
+                this.showToast("Error: " + res.error, "error");
+            } else {
+                this.loading = false;
             }
-            this.loading = false;
         },
+
+
 
         // Marketplace
         async sellItem() {
-            if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") return alert("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้");
-            if (!this.sellSelectedInv || !this.sellPrice) return alert("กรุณาเลือกการ์ดและราคา");
+            if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") return this.showToast("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้", "error");
+            if (!this.sellSelectedInv || !this.sellPrice) return this.showToast("กรุณาเลือกการ์ดและราคา", "error");
             this.loading = true;
-            const res = await this.apiCall('sellMarketplace', { userId: this.user.user_id, inventoryId: this.sellSelectedInv, price: parseInt(this.sellPrice) });
+            const res = await this.apiCall('sellMarketplace', { inventoryId: this.sellSelectedInv, price: parseInt(this.sellPrice) });
             if (res && res.status === 'success') {
-                alert(res.message);
+                this.showToast(res.message, "success");
                 this.sellSelectedInv = "";
                 await this.fetchData();
+            } else if (res) {
+                this.showToast(res.error, "error");
             }
             this.loading = false;
         },
         async buyMarket(item) {
-            if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") return alert("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้");
-            if (!confirm(`ยืนยันการซื้อ ${this.getCardById(item.card_id).name} ในราคา ${item.price_coins} 🪙?`)) return;
+            if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") return this.showToast("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้", "error");
+            if (!confirm(`ยืนยันการซื้อ ${this.getCardById(item.card_id).name} ในราคา ${item.price_coins} เหรียญ?`)) return;
             this.loading = true;
-            const res = await this.apiCall('buyMarketplace', { userId: this.user.user_id, listingId: item.listing_id });
+            const res = await this.apiCall('buyMarketplace', { listingId: item.listing_id });
             if (res && res.status === 'success') {
-                alert(res.message);
+                this.showToast(res.message, "success");
                 await this.fetchData();
             } else if (res) {
-                alert(res.error);
+                this.showToast(res.error, "error");
             }
             this.loading = false;
         },
 
-        // Fallback Mock Data
-        loadMockData() {
-            if (this.user) {
-                this.user.coins = 1000;
-            } else {
-                this.user = { user_id: 'guest123', display_name: 'Guest Tester', coins: 1000 };
+
+        // Toast
+        showToast(message, type = 'info') {
+            const id = this.toastIdCounter++;
+            this.toasts.push({ id, message, type });
+            setTimeout(() => {
+                this.toasts = this.toasts.filter(t => t.id !== id);
+            }, 3000);
+        },
+
+        // Feedback
+        async submitFeedback() {
+            if (!this.feedbackData.rating && !this.feedbackData.text) {
+                return this.showToast('กรุณากรอกข้อมูลเพื่อส่ง feedback', 'error');
             }
-            this.collections = [
-                { collection_id: '77THCC', collection_name: '77 จังหวัดประเทศไทย', description: 'สะสมการ์ดจังหวัดประจำประเทศไทย', icon: '🇹🇭', total_cards: 77 },
-                { collection_id: '711FOOD', collection_name: 'ของกิน 7-11', description: 'ของกินยอดฮิตในร้านสะดวกซื้อ', icon: '🍱', total_cards: 50 },
-                { collection_id: '90S', collection_name: 'ไอเทมยุค 90s', description: 'ของเล่นและขนมในความทรงจำ', icon: '🎮', total_cards: 30 }
-            ];
-            this.cards = [
-                { collection_id: '77THCC', card_id: '77THCC-01', name: 'กรุงเทพมหานคร', category_tag: 'Central', rarity: 'Rare', slogan: 'กรุงเทพฯ ดุจเทพสร้าง...', stat_1_label: 'ท่องเที่ยว', stat_1_val: 95, stat_2_label: 'วัฒนธรรม', stat_2_val: 90, link_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },
-                { collection_id: '77THCC', card_id: '77THCC-02', name: 'เชียงใหม่', category_tag: 'North', rarity: 'Common', slogan: 'ดอยสุเทพเป็นศรี ประเพณีเป็นสง่า...', stat_1_label: 'ท่องเที่ยว', stat_1_val: 99, stat_2_label: 'วัฒนธรรม', stat_2_val: 85, link_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },
-                { collection_id: '711FOOD', card_id: '711FOOD-01', name: 'ข้าวกล่องกะเพราหมูสับ', category_tag: 'Food', rarity: 'Common', slogan: 'อร่อยด่วนทันใจ...', stat_1_label: 'ความอร่อย', stat_1_val: 80, stat_2_label: 'แคลอรี', stat_2_val: 550, link_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' }
-            ];
-            this.inventory = [
-                { id: 'INV-1', user_id: this.user.user_id, card_id: 'TH-10' }
-            ];
-            this.marketplace = [
-                { listing_id: 'MKT-1', seller_id: 'otherUser', inventory_id: 'INV-X', card_id: 'TH-83', price_coins: 500, status: 'Active' }
-            ];
+            this.showFeedbackModal = false;
+            this.showToast('กำลังส่ง feedback...', 'info');
+            
+            const res = await this.apiCall('submitFeedback', this.feedbackData);
+            this.showToast('ขอบคุณสำหรับ feedback ของคุณ!', 'success');
+            this.feedbackData = { rating: 0, text: '' };
         }
     }
 }).mount('#app');
