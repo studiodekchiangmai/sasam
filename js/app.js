@@ -12,9 +12,12 @@ createApp({
             collections: [],
             inventory: [],
             marketplace: [],
-            currentView: 'hub',
-            activeNav: 'hub',
+            currentView: 'home',
+            activeNav: 'home',
+            // Profile sub-views: 'portfolio' | 'stats' | 'settings'
+            profileSubView: 'portfolio',
             albumTitle: '',
+            albumIcon: '',
             selectedCollection: '',
             selectedCollectionForGacha: '77THCC',
             loading: true,
@@ -27,9 +30,12 @@ createApp({
         }
     },
     computed: {
+        uniqueOwnedCount() {
+            return this.cards.filter(c => this.hasCard(c.card_id)).length;
+        },
         completionPercent() {
             if (this.cards.length === 0) return 0;
-            return Math.round((this.inventory.length / this.cards.length) * 100);
+            return Math.round((this.uniqueOwnedCount / this.cards.length) * 100);
         },
         filteredMarketplace() {
             if (!this.marketSearch) return this.marketplace;
@@ -69,9 +75,12 @@ createApp({
             this.activeNav = view;
             this.currentView = view;
             if (view === 'market') this.loadMarketplace();
+            // Reset sub-view when switching main nav
+            if (view === 'profile') this.profileSubView = 'portfolio';
         },
-        openAlbum(collectionId, title) {
+        openAlbum(collectionId, icon, title) {
             this.selectedCollection = collectionId;
+            this.albumIcon = icon || '';
             this.albumTitle = title || 'อัลบั้มการ์ด';
             this.currentView = 'album';
         },
@@ -85,6 +94,16 @@ createApp({
                 : this.cards.filter(c => c.collection_id === collectionId);
             const owned = collectionCards.filter(c => this.hasCard(c.card_id)).length;
             return `${owned}/${collectionCards.length}`;
+        },
+        collectionPercent(collectionId) {
+            const collectionCards = this.cards.filter(c => c.collection_id === collectionId);
+            if (collectionCards.length === 0) return 0;
+            const owned = collectionCards.filter(c => this.hasCard(c.card_id)).length;
+            return Math.round((owned / collectionCards.length) * 100);
+        },
+        collectionOwnedCount(collectionId) {
+            const collectionCards = this.cards.filter(c => c.collection_id === collectionId);
+            return collectionCards.filter(c => this.hasCard(c.card_id)).length;
         },
 
         // Auth

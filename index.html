@@ -34,55 +34,95 @@
             <!-- Scrollable Content Area -->
             <div class="content-area">
 
-                <!-- 1. COLLECTION HUB -->
-                <div :class="['view-section', { active: currentView === 'hub' }]">
+                <!-- ===== 1. หน้าแรก (HOME) ===== -->
+                <div :class="['view-section', { active: currentView === 'home' }]">
+
+                    <!-- Dashboard Section -->
                     <div class="section-title">
-                        คอลเลกชันการ์ด
-                        <span class="sub-text">{{ inventory.length }}/{{ cards.length }} การ์ด</span>
+                        <span><i class="fa-solid fa-gauge-high"></i> Dashboard</span>
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="dash-card">
+                            <div class="dash-icon"><i class="fa-solid fa-layer-group"></i></div>
+                            <div class="dash-info">
+                                <div class="dash-label">การ์ดทั้งหมด</div>
+                                <div class="dash-value">{{ inventory.length }}<span class="dash-unit"> / {{ cards.length }}</span></div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-icon coin"><i class="fa-solid fa-coins"></i></div>
+                            <div class="dash-info">
+                                <div class="dash-label">เหรียญ</div>
+                                <div class="dash-value">{{ user ? (user.coins || 0) : 0 }}</div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-icon purple"><i class="fa-solid fa-percent"></i></div>
+                            <div class="dash-info">
+                                <div class="dash-label">ความสำเร็จ</div>
+                                <div class="dash-value">{{ completionPercent }}%</div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-icon cyan"><i class="fa-solid fa-store"></i></div>
+                            <div class="dash-info">
+                                <div class="dash-label">ตลาด</div>
+                                <div class="dash-value">{{ marketplace.length }}<span class="dash-unit"> รายการ</span></div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="category-card" @click="openAlbum('', 'fa-solid fa-map', 'การ์ดทั้งหมดในระบบ')">
-                        <div class="category-info">
-                            <h3><i class="fa-solid fa-map"></i> การ์ดทั้งหมด (All Cards)</h3>
-                            <p>คอลเลกชันการ์ดทั้งหมดในระบบสะสม</p>
+                    <!-- Progress Section -->
+                    <div class="section-title" style="margin-top: 24px;">
+                        <span><i class="fa-solid fa-chart-line"></i> Progress</span>
+                        <span class="sub-text">{{ completionPercent }}% สำเร็จ</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" :style="{ width: completionPercent + '%' }"></div>
                         </div>
-                        <div class="category-badge">{{ countByCollection('') }}</div>
+                        <div class="progress-detail-text">สะสมแล้ว {{ uniqueOwnedCount }} จาก {{ cards.length }} การ์ด</div>
+
+                        <div v-for="col in collections" :key="'prog-'+col.collection_id" class="progress-collection-item">
+                            <div class="progress-col-header">
+                                <span><i :class="col.icon"></i> {{ col.collection_name }}</span>
+                                <span class="sub-text">{{ countByCollection(col.collection_id) }}</span>
+                            </div>
+                            <div class="progress-bar-container small">
+                                <div class="progress-bar-fill" :style="{ width: collectionPercent(col.collection_id) + '%' }"></div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div v-for="col in collections" :key="col.collection_id" class="category-card" @click="openAlbum(col.collection_id, col.icon, col.collection_name)">
-                        <div class="category-info">
-                            <h3><i :class="col.icon"></i> {{ col.collection_name }}</h3>
-                            <p>{{ col.description }}</p>
+                    <!-- News Section -->
+                    <div class="section-title" style="margin-top: 24px;">
+                        <span><i class="fa-solid fa-newspaper"></i> ข่าว</span>
+                    </div>
+                    <div class="news-section">
+                        <div class="news-item">
+                            <div class="news-badge new">NEW</div>
+                            <div class="news-content">
+                                <div class="news-title">ยินดีต้อนรับสู่ Sasam!</div>
+                                <div class="news-desc">แพลตฟอร์มสะสมการ์ดออนไลน์ — สุ่ม สะสม แลกเปลี่ยน</div>
+                                <div class="news-date"><i class="fa-regular fa-clock"></i> วันนี้</div>
+                            </div>
                         </div>
-                        <div class="category-badge">{{ countByCollection(col.collection_id) }}</div>
+                        <div class="news-item">
+                            <div class="news-badge event">EVENT</div>
+                            <div class="news-content">
+                                <div class="news-title">คอลเลกชันใหม่กำลังจะมา</div>
+                                <div class="news-desc">เตรียมพบกับคอลเลกชันพิเศษเร็วๆ นี้</div>
+                                <div class="news-date"><i class="fa-regular fa-clock"></i> เร็วๆ นี้</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 2. ALBUM GRID VIEW -->
-                <div :class="['view-section', { active: currentView === 'album' }]">
-                    <div class="album-header">
-                        <button class="back-btn" @click="currentView = 'hub'">←</button>
-                        <div>
-                            <h2 style="font-size:18px;"><i v-if="albumIcon" :class="albumIcon"></i> {{ albumTitle }}</h2>
-                            <p class="sub-text">{{ countByCollection(selectedCollection) }} การ์ดครอบครอง</p>
-                        </div>
-                    </div>
-                    <div class="card-grid">
-                        <div v-for="card in filteredCards()" :key="card.card_id"
-                             :class="['card-item', hasCard(card.card_id) ? 'unlocked' : 'locked']"
-                             @click="openCardModal(card)">
-                            <img :src="getDriveImageUrl(card.image_drive_id)" :alt="card.name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
-                            <div class="card-name">{{ card.name }}</div>
-                            <div class="card-id">#{{ card.card_id }}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. MARKET LIVE -->
+                <!-- ===== 2. ตลาด (MARKET) ===== -->
                 <div :class="['view-section', { active: currentView === 'market' }]">
                     <div class="section-title">
-                        Market Live <i class="fa-solid fa-circle" style="color: red; font-size: 14px; vertical-align: middle;"></i>
-                        <span class="sub-text">ซื้อขายแลกเปลี่ยนการ์ด</span>
+                        ซื้อขายการ์ด <i class="fa-solid fa-circle" style="color: red; font-size: 14px; vertical-align: middle;"></i>
+                        <span class="sub-text">Market Live</span>
                     </div>
                     <input type="text" class="market-search" v-model="marketSearch" placeholder="ค้นหาชื่อการ์ด...">
 
@@ -121,9 +161,10 @@
                     </div>
                 </div>
 
-                <!-- 4. GACHA DRAWING -->
+                <!-- ===== 3. สุ่ม (GACHA) ===== -->
                 <div :class="['view-section', { active: currentView === 'gacha' }]">
-                    <div class="section-title">สุ่มซองการ์ดประจำวัน <i class="fa-solid fa-dice"></i></div>
+                    <!-- เปิดซอง -->
+                    <div class="section-title">เปิดซอง <i class="fa-solid fa-box-open"></i></div>
                     <div class="gacha-container">
                         <p class="sub-text">เลือกคอลเลกชันเพื่อสุ่มการ์ด (50 <i class="fa-solid fa-coins" style="color: gold;"></i>)</p>
                         
@@ -155,61 +196,251 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Animation Section -->
+                    <div class="section-title" style="margin-top: 28px;">
+                        <span><i class="fa-solid fa-wand-magic-sparkles"></i> Animation</span>
+                    </div>
+                    <div class="animation-section">
+                        <div class="animation-preview-box">
+                            <div class="animation-icon-container">
+                                <i class="fa-solid fa-sparkles"></i>
+                            </div>
+                            <h3>เอฟเฟกต์การเปิดซอง</h3>
+                            <p class="sub-text">ดูแอนิเมชันการเปิดซองสุ่มการ์ดแบบสวยๆ</p>
+                            <div class="animation-status">
+                                <i class="fa-solid fa-code"></i> กำลังพัฒนา
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 5. PORTFOLIO & STATS -->
-                <div :class="['view-section', { active: currentView === 'stats' }]">
-                    <div class="section-title">พอร์ตสะสมการ์ด</div>
-                    <div class="portfolio-card">
-                        <div class="total-val-title">จำนวนการ์ดที่สะสมได้</div>
-                        <div class="total-val-amount">{{ inventory.length }} ใบ</div>
-                        <div class="val-change">จากทั้งหมด {{ cards.length }} ใบ</div>
+                <!-- ===== 4. คอลเลกชัน (COLLECTION) ===== -->
+                <!-- 4a. COLLECTION HUB (default) -->
+                <div :class="['view-section', { active: currentView === 'collection' }]">
+                    <div class="section-title">
+                        คอลเลกชันการ์ด
+                        <span class="sub-text">{{ uniqueOwnedCount }}/{{ cards.length }} การ์ด</span>
+                    </div>
 
-                        <div class="chart-placeholder">
-                            <div class="chart-bar" style="height: 30%;"></div>
-                            <div class="chart-bar" style="height: 45%;"></div>
-                            <div class="chart-bar" style="height: 35%;"></div>
-                            <div class="chart-bar" style="height: 60%;"></div>
-                            <div class="chart-bar" style="height: 80%;"></div>
-                            <div class="chart-bar active" :style="{ height: completionPercent + '%' }"></div>
+                    <!-- แต่ละคอลเลกชัน -->
+                    <div v-for="col in collections" :key="col.collection_id" class="collection-block">
+                        <div class="category-card" @click="openAlbum(col.collection_id, col.icon, col.collection_name)">
+                            <div class="category-info">
+                                <h3><i :class="col.icon"></i> {{ col.collection_name }}</h3>
+                                <p>{{ col.description }}</p>
+                            </div>
+                            <div class="category-badge">{{ countByCollection(col.collection_id) }}</div>
+                        </div>
+                        <!-- Achievement ของคอลเลกชันนี้ -->
+                        <div class="collection-achievement">
+                            <div class="achievement-progress-row">
+                                <div class="progress-bar-container small">
+                                    <div class="progress-bar-fill" :style="{ width: collectionPercent(col.collection_id) + '%' }"></div>
+                                </div>
+                                <span class="achievement-percent">{{ collectionPercent(col.collection_id) }}%</span>
+                            </div>
+                            <div class="achievement-badges">
+                                <div :class="['ach-badge', collectionOwnedCount(col.collection_id) >= 1 ? 'achieved' : '']" title="สะสมการ์ดใบแรก">
+                                    <i class="fa-solid fa-star"></i>
+                                </div>
+                                <div :class="['ach-badge', collectionPercent(col.collection_id) >= 50 ? 'achieved' : '']" :title="'สะสมครบ 50% ของ ' + col.collection_name">
+                                    <i class="fa-solid fa-crown"></i>
+                                </div>
+                                <div :class="['ach-badge', collectionPercent(col.collection_id) >= 100 ? 'achieved' : '']" :title="'สะสมครบ 100% ของ ' + col.collection_name">
+                                    <i class="fa-solid fa-gem"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="section-title" style="font-size: 16px; margin-top: 20px;">สถิติการสะสม</div>
-                    <div class="stat-card">
-                        <div class="stat-label">อัตราความสำเร็จ</div>
-                        <div class="stat-value">{{ completionPercent }}%</div>
+                    <!-- Achievement หลัก -->
+                    <div class="section-title" style="margin-top: 24px;">
+                        <span><i class="fa-solid fa-trophy"></i> Achievement หลัก</span>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">เหรียญคงเหลือ</div>
-                        <div class="stat-value"><i class="fa-solid fa-coins" style="color: gold;"></i> {{ user ? user.coins : 0 }}</div>
+                    <div class="achievement-list">
+                        <div :class="['achievement-item', uniqueOwnedCount >= 1 ? 'achieved' : '']">
+                            <div class="achievement-icon"><i class="fa-solid fa-star"></i></div>
+                            <div class="achievement-info">
+                                <div class="achievement-name">นักสะสมมือใหม่</div>
+                                <div class="achievement-desc">สะสมการ์ดใบแรก</div>
+                            </div>
+                            <div class="achievement-status">
+                                <i v-if="uniqueOwnedCount >= 1" class="fa-solid fa-check-circle"></i>
+                                <i v-else class="fa-solid fa-lock"></i>
+                            </div>
+                        </div>
+                        <div :class="['achievement-item', uniqueOwnedCount >= 10 ? 'achieved' : '']">
+                            <div class="achievement-icon"><i class="fa-solid fa-fire"></i></div>
+                            <div class="achievement-info">
+                                <div class="achievement-name">สะสมจริงจัง</div>
+                                <div class="achievement-desc">สะสมการ์ดครบ 10 ใบ</div>
+                            </div>
+                            <div class="achievement-status">
+                                <i v-if="uniqueOwnedCount >= 10" class="fa-solid fa-check-circle"></i>
+                                <i v-else class="fa-solid fa-lock"></i>
+                            </div>
+                        </div>
+                        <div :class="['achievement-item', completionPercent >= 50 ? 'achieved' : '']">
+                            <div class="achievement-icon"><i class="fa-solid fa-crown"></i></div>
+                            <div class="achievement-info">
+                                <div class="achievement-name">ครึ่งทางแล้ว</div>
+                                <div class="achievement-desc">สะสมครบ 50% ของทั้งหมด</div>
+                            </div>
+                            <div class="achievement-status">
+                                <i v-if="completionPercent >= 50" class="fa-solid fa-check-circle"></i>
+                                <i v-else class="fa-solid fa-lock"></i>
+                            </div>
+                        </div>
+                        <div :class="['achievement-item', completionPercent >= 100 ? 'achieved' : '']">
+                            <div class="achievement-icon"><i class="fa-solid fa-gem"></i></div>
+                            <div class="achievement-info">
+                                <div class="achievement-name">ตำนาน!</div>
+                                <div class="achievement-desc">สะสมครบ 100% ทุกการ์ด</div>
+                            </div>
+                            <div class="achievement-status">
+                                <i v-if="completionPercent >= 100" class="fa-solid fa-check-circle"></i>
+                                <i v-else class="fa-solid fa-lock"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">ชื่อผู้เล่น</div>
-                        <div class="stat-value">{{ user ? user.display_name : '-' }}</div>
+                </div>
+
+                <!-- 4b. ALBUM GRID VIEW -->
+                <div :class="['view-section', { active: currentView === 'album' }]">
+                    <div class="album-header">
+                        <button class="back-btn" @click="currentView = 'collection'">←</button>
+                        <div>
+                            <h2 style="font-size:18px;"><i v-if="albumIcon" :class="albumIcon"></i> {{ albumTitle }}</h2>
+                            <p class="sub-text">{{ countByCollection(selectedCollection) }} การ์ดครอบครอง</p>
+                        </div>
+                    </div>
+                    <div class="card-grid">
+                        <div v-for="card in filteredCards()" :key="card.card_id"
+                             :class="['card-item', hasCard(card.card_id) ? 'unlocked' : 'locked']"
+                             @click="openCardModal(card)">
+                            <img :src="getDriveImageUrl(card.image_drive_id)" :alt="card.name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
+                            <div class="card-name">{{ card.name }}</div>
+                            <div class="card-id">#{{ card.card_id }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== 5. โปรไฟล์ (PROFILE) ===== -->
+                <div :class="['view-section', { active: currentView === 'profile' }]">
+
+                    <!-- พอร์ต -->
+                    <div v-if="profileSubView === 'portfolio'">
+                        <div class="section-title">พอร์ตสะสมการ์ด</div>
+                        <div class="portfolio-card">
+                            <div class="total-val-title">จำนวนการ์ดที่สะสมได้</div>
+                            <div class="total-val-amount">{{ inventory.length }} ใบ</div>
+                            <div class="val-change">จากทั้งหมด {{ cards.length }} ใบ</div>
+
+                            <div class="chart-placeholder">
+                                <div class="chart-bar" style="height: 30%;"></div>
+                                <div class="chart-bar" style="height: 45%;"></div>
+                                <div class="chart-bar" style="height: 35%;"></div>
+                                <div class="chart-bar" style="height: 60%;"></div>
+                                <div class="chart-bar" style="height: 80%;"></div>
+                                <div class="chart-bar active" :style="{ height: completionPercent + '%' }"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- สถิติ -->
+                    <div v-if="profileSubView === 'stats'">
+                        <div class="section-title"><i class="fa-solid fa-chart-pie"></i> สถิติการสะสม</div>
+                        <div class="stat-card">
+                            <div class="stat-label">อัตราความสำเร็จ</div>
+                            <div class="stat-value">{{ completionPercent }}%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">เหรียญคงเหลือ</div>
+                            <div class="stat-value"><i class="fa-solid fa-coins" style="color: gold;"></i> {{ user ? user.coins : 0 }}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">การ์ดที่สะสมได้</div>
+                            <div class="stat-value">{{ inventory.length }} ใบ</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">คอลเลกชัน</div>
+                            <div class="stat-value">{{ collections.length }} ชุด</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">การ์ดในตลาด</div>
+                            <div class="stat-value">{{ marketplace.length }} รายการ</div>
+                        </div>
+                    </div>
+
+                    <!-- ตั้งค่า -->
+                    <div v-if="profileSubView === 'settings'">
+                        <div class="section-title"><i class="fa-solid fa-gear"></i> ตั้งค่า</div>
+                        <div class="settings-section">
+                            <div class="settings-profile-header">
+                                <img v-if="profilePic" :src="profilePic" class="settings-avatar">
+                                <div v-else class="settings-avatar-placeholder"><i class="fa-solid fa-user"></i></div>
+                                <div>
+                                    <div class="settings-name">{{ user ? user.display_name : '-' }}</div>
+                                    <div class="settings-id sub-text">ID: {{ user ? user.user_id : '-' }}</div>
+                                </div>
+                            </div>
+
+                            <div class="settings-item" @click="logout">
+                                <div class="settings-item-left">
+                                    <i class="fa-solid fa-right-from-bracket"></i>
+                                    <span>ออกจากระบบ</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-right sub-text"></i>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-item-left">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                    <span>เวอร์ชัน</span>
+                                </div>
+                                <span class="sub-text">1.0.0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile sub-nav tabs -->
+                    <div class="profile-sub-tabs">
+                        <button :class="['sub-tab', { active: profileSubView === 'portfolio' }]" @click="profileSubView = 'portfolio'">
+                            <i class="fa-solid fa-briefcase"></i> พอร์ต
+                        </button>
+                        <button :class="['sub-tab', { active: profileSubView === 'stats' }]" @click="profileSubView = 'stats'">
+                            <i class="fa-solid fa-chart-pie"></i> สถิติ
+                        </button>
+                        <button :class="['sub-tab', { active: profileSubView === 'settings' }]" @click="profileSubView = 'settings'">
+                            <i class="fa-solid fa-gear"></i> ตั้งค่า
+                        </button>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Bottom Navigation Bar -->
+            <!-- Bottom Navigation Bar (5 tabs) -->
             <div class="bottom-nav">
-                <button :class="['nav-item', { active: activeNav === 'hub' }]" @click="switchNav('hub')">
-                    <span class="icon"><i class="fa-solid fa-images"></i></span>
-                    <span>คอลเลกชัน</span>
+                <button :class="['nav-item', { active: activeNav === 'home' }]" @click="switchNav('home')">
+                    <span class="icon"><i class="fa-solid fa-house"></i></span>
+                    <span>หน้าแรก</span>
                 </button>
                 <button :class="['nav-item', { active: activeNav === 'market' }]" @click="switchNav('market')">
                     <span class="icon"><i class="fa-solid fa-cart-shopping"></i></span>
-                    <span>ตลาด Live</span>
+                    <span>ตลาด</span>
                 </button>
-                <div class="nav-center-btn" @click="switchNav('gacha')"><i class="fa-solid fa-dice"></i></div>
-                <button :class="['nav-item', { active: activeNav === 'gacha' }]" @click="switchNav('gacha')">
-                    <span class="icon"><i class="fa-solid fa-gift"></i></span>
-                    <span>สุ่มการ์ด</span>
+                <button :class="['nav-item gacha-nav', { active: activeNav === 'gacha' }]" @click="switchNav('gacha')">
+                    <span class="icon"><i class="fa-solid fa-dice"></i></span>
+                    <span>สุ่ม</span>
                 </button>
-                <button :class="['nav-item', { active: activeNav === 'stats' }]" @click="switchNav('stats')">
-                    <span class="icon"><i class="fa-solid fa-chart-pie"></i></span>
-                    <span>พอร์ต</span>
+                <button :class="['nav-item', { active: activeNav === 'collection' }]" @click="switchNav('collection')">
+                    <span class="icon"><i class="fa-solid fa-images"></i></span>
+                    <span>คอลเลกชัน</span>
+                </button>
+                <button :class="['nav-item', { active: activeNav === 'profile' }]" @click="switchNav('profile')">
+                    <span class="icon"><i class="fa-solid fa-user"></i></span>
+                    <span>โปรไฟล์</span>
                 </button>
             </div>
         </div>
