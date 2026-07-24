@@ -32,6 +32,7 @@ createApp({
             gachaHistory: [],
             showGachaAnim: false,
             showFeedbackModal: false,
+            showNewsModal: false,
             feedbackData: { rating: 0, text: '' }
         }
     },

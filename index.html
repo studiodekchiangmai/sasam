@@ -109,6 +109,14 @@
                         <span><i class="fa-solid fa-newspaper"></i> ข่าว</span>
                     </div>
                     <div class="news-section">
+                        <div class="news-item" @click="showNewsModal = true" style="cursor: pointer;">
+                            <div class="news-badge new">UPDATE</div>
+                            <div class="news-content">
+                                <div class="news-title">Sasam beta v0.1</div>
+                                <div class="news-desc">ดูรายละเอียดการอัปเดตเวอร์ชันแรกของเรา</div>
+                                <div class="news-date"><i class="fa-regular fa-clock"></i> ล่าสุด</div>
+                            </div>
+                        </div>
                         <div class="news-item">
                             <div class="news-badge new">NEW</div>
                             <div class="news-content">
@@ -503,6 +511,30 @@
                 </div>
                 <textarea class="feedback-textarea" v-model="feedbackData.text" placeholder="ข้อเสนอแนะเพิ่มเติม (ถ้ามี)..."></textarea>
                 <button class="draw-btn-main" @click="submitFeedback" style="margin-top: 0; padding: 12px; font-size: 14px;">ส่งข้อมูล</button>
+            </div>
+        </div>
+
+        <!-- News Modal -->
+        <div :class="['modal-overlay', { active: showNewsModal }]" @click.self="showNewsModal = false">
+            <div class="modal-box" v-if="showNewsModal" style="max-height: 80vh; overflow-y: auto; text-align: left;">
+                <button class="close-modal" @click="showNewsModal = false">✕</button>
+                <h3 style="font-size:18px; margin-bottom: 10px;">Sasam beta v0.1 พร้อมให้ทดลองใช้งานแล้ว 🎉</h3>
+                
+                <h4 style="margin-top:15px; margin-bottom: 5px;">ภาพรวม</h4>
+                <p class="sub-text" style="line-height: 1.5;">ยินดีต้อนรับสู่ Sasam v0.1! เวอร์ชันแรกของแพลตฟอร์มสะสมการ์ดออนไลน์ ที่ให้คุณได้สนุกกับการสะสม สุ่มการ์ด แลกเปลี่ยนในตลาด และติดตามความคืบหน้าคอลเลกชันของคุณได้อย่างง่ายดาย</p>
+
+                <h4 style="margin-top:15px; margin-bottom: 5px;">✨ มีอะไรใหม่บ้าง? (New Features)</h4>
+                <ul class="sub-text" style="line-height: 1.6; padding-left: 20px; margin-top: 5px;">
+                    <li>🃏 คอลเลกชันการ์ด: ดูรายการการ์ดทั้งหมดในคอลเลกชัน พร้อมสถิติการสะสมและความคืบหน้าของแต่ละชุด</li>
+                    <li>🎲 ระบบกาชาสุ่มการ์ด: ใช้เหรียญเพื่อสุ่มการ์ดใหม่จากคอลเลกชันที่เลือก</li>
+                    <li>🛒 ตลาดซื้อขายการ์ด: วางขายการ์ดของคุณ และซื้อการ์ดจากผู้เล่นคนอื่นได้ผ่านหน้า Market</li>
+                    <li>📊 โปรไฟล์และสถิติ: ดูข้อมูลสะสม, จำนวนการ์ดที่มี, ค่าความคืบหน้า, และข้อมูลตลาดในหน้าโปรไฟล์</li>
+                    <li>🔐 ระบบล็อกอิน: เข้าสู่ระบบเพื่อบันทึกข้อมูลการสะสมของคุณอย่างปลอดภัย</li>
+                    <li>📰 ข่าวสารและประกาศ: ติดตามข่าวสาร กิจกรรม และอัปเดตใหม่ๆ ได้จากหน้า Dashboard</li>
+                    <li>💬 ระบบรับข้อเสนอแนะ: ร่วมเป็นส่วนหนึ่งในการพัฒนาโดยการส่ง Feedback ให้ทีมงานได้โดยตรง</li>
+                </ul>
+
+                <button class="draw-btn-main" @click="showNewsModal = false" style="margin-top: 20px; padding: 12px; font-size: 14px;">ปิด</button>
             </div>
         </div>
 
