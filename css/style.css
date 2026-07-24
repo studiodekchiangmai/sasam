@@ -1436,6 +1436,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    margin-top: 20px;
     margin-bottom: 20px;
 }
 
@@ -1459,7 +1460,8 @@ body {
     margin-bottom: 6px;
 }
 
-.login-box input[type="text"] {
+.login-box input[type="text"],
+.login-box input[type="password"] {
     width: 100%;
     background: var(--bg-element);
     border: 1px solid var(--border-color);
@@ -1473,7 +1475,8 @@ body {
     transition: border-color 0.2s;
 }
 
-.login-box input[type="text"]:focus {
+.login-box input[type="text"]:focus,
+.login-box input[type="password"]:focus {
     border-color: var(--accent-green);
 }
 
@@ -1493,6 +1496,26 @@ body {
 }
 
 .login-submit-btn:hover { opacity: 0.9; }
+
+.register-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 14px;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Prompt', sans-serif;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+}
+
+.register-btn:hover {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
 
 /* ==================== Loading ==================== */
 .loading-overlay {
