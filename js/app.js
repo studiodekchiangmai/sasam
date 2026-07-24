@@ -54,8 +54,8 @@ createApp({
         }
     },
     async mounted() {
-        const savedUser = localStorage.getItem('sasam_user');
-        const token = localStorage.getItem('sasam_token');
+        const savedUser = localStorage.getItem('sasom_user');
+        const token = localStorage.getItem('sasom_token');
         if (!savedUser || !token) {
             window.location.href = 'login.html';
             return;
@@ -187,8 +187,8 @@ createApp({
         // Auth
         logout() {
             if (!confirm('ต้องการออกจากระบบหรือไม่?')) return;
-            localStorage.removeItem('sasam_user');
-            localStorage.removeItem('sasam_token');
+            localStorage.removeItem('sasom_user');
+            localStorage.removeItem('sasom_token');
             if (typeof liff !== 'undefined' && LIFF_ID !== "YOUR_LIFF_ID_HERE" && liff.isLoggedIn()) {
                 liff.logout();
             }
@@ -201,7 +201,7 @@ createApp({
                 console.warn("API_URL is not set. Using mock behavior.");
                 return null;
             }
-            const token = localStorage.getItem('sasam_token');
+            const token = localStorage.getItem('sasom_token');
             if (token) {
                 payload.token = token;
             }
@@ -238,7 +238,7 @@ createApp({
             if (!driveId || driveId === "1A2B3C4D5E6F7G8H9I" || driveId.startsWith("http")) {
                 if (driveId && driveId.startsWith("http")) return driveId;
                 // เปลี่ยน Placeholder เป็นตัวอื่นเนื่องจาก via.placeholder.com อาจจะล่มหรือโดนบล็อก
-                return 'https://placehold.co/200x280/151a23/00ff87?text=Sasam';
+                return 'https://placehold.co/200x280/151a23/00ff87?text=Sasom';
             }
             // ห้ามใช้ /view?usp=sharing เพราะมันคือหน้าเว็บ ไม่ใช่ไฟล์รูปภาพ
             // ใช้ลิงก์ thumbnail ของ Google Drive แทน (ใช้งานเป็น img src ได้)
@@ -279,7 +279,7 @@ createApp({
 
                     this.gachaResult = res.obtained;
                     this.user.coins = res.coins;
-                    localStorage.setItem('sasam_user', JSON.stringify(this.user));
+                    localStorage.setItem('sasom_user', JSON.stringify(this.user));
                     this.modalMessage = '<i class="fa-solid fa-gift"></i> ยินดีด้วย! คุณได้รับการ์ดใหม่!';
                     this.selectedCardModal = res.obtained;
                     await this.fetchData();

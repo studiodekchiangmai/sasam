@@ -12,7 +12,7 @@ createApp({
     },
     async mounted() {
         // If already logged in locally and has token, redirect to main app
-        if (localStorage.getItem('sasam_user') && localStorage.getItem('sasam_token')) {
+        if (localStorage.getItem('sasom_user') && localStorage.getItem('sasom_token')) {
             window.location.href = 'index.html';
             return;
         }
@@ -54,9 +54,9 @@ createApp({
                 userData = res.user;
             }
             if (res && res.token) {
-                localStorage.setItem('sasam_token', res.token);
+                localStorage.setItem('sasom_token', res.token);
             }
-            localStorage.setItem('sasam_user', JSON.stringify(userData));
+            localStorage.setItem('sasom_user', JSON.stringify(userData));
             window.location.href = 'index.html';
         },
 
@@ -97,8 +97,8 @@ createApp({
                 display_name: 'ผู้ทดสอบระบบ',
                 coins: 9999
             };
-            localStorage.setItem('sasam_token', 'mock_token_12345');
-            localStorage.setItem('sasam_user', JSON.stringify(testUser));
+            localStorage.setItem('sasom_token', 'mock_token_12345');
+            localStorage.setItem('sasom_user', JSON.stringify(testUser));
             window.location.href = 'index.html';
         }
     }

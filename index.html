@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>สะสม (Sasam) - แพลตฟอร์มสะสมการ์ด</title>
+    <title>สะสม (Sasom) - แพลตฟอร์มสะสมการ์ด</title>
+    <link rel="icon" type="image/x-icon" href="assets/image/icons/sasom.ico">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -30,7 +31,7 @@
             <!-- Top Header Bar -->
             <div class="top-header">
                 <div class="brand-logo">
-                    <i class="fa-solid fa-layer-group"></i> <span class="accent">สะสม</span>
+                    <img src="assets/image/icons/sasom.ico" alt="Sasom" style="width: 28px; height: 28px; object-fit: contain; vertical-align: middle; margin-right: 8px;"> <span class="accent">สะสม</span>
                 </div>
                 <div class="header-actions">
                     <div class="balance-badge">
@@ -112,7 +113,7 @@
                         <div class="news-item" @click="showNewsModal = true" style="cursor: pointer;">
                             <div class="news-badge new">UPDATE</div>
                             <div class="news-content">
-                                <div class="news-title">Sasam beta v0.1</div>
+                                <div class="news-title">Sasom beta v0.1</div>
                                 <div class="news-desc">ดูรายละเอียดการอัปเดตเวอร์ชันแรกของเรา</div>
                                 <div class="news-date"><i class="fa-regular fa-clock"></i> ล่าสุด</div>
                             </div>
@@ -120,19 +121,19 @@
                         <div class="news-item">
                             <div class="news-badge new">NEW</div>
                             <div class="news-content">
-                                <div class="news-title">ยินดีต้อนรับสู่ Sasam!</div>
-                                <div class="news-desc">แพลตฟอร์มสะสมการ์ดออนไลน์ — สุ่ม สะสม แลกเปลี่ยน</div>
+                                <div class="news-title">ยินดีต้อนรับสู่ Sasom! สะสม</div>
+                                <div class="news-desc">แพลตฟอร์มสะสมการ์ดออนไลน์รูปแบบใหม่ — สุ่ม สะสม แลกเปลี่ยน</div>
                                 <div class="news-date"><i class="fa-regular fa-clock"></i> วันนี้</div>
                             </div>
                         </div>
-                        <div class="news-item">
+                        <!-- <div class="news-item">
                             <div class="news-badge event">EVENT</div>
                             <div class="news-content">
                                 <div class="news-title">คอลเลกชันใหม่กำลังจะมา</div>
                                 <div class="news-desc">เตรียมพบกับคอลเลกชันพิเศษเร็วๆ นี้</div>
                                 <div class="news-date"><i class="fa-regular fa-clock"></i> เร็วๆ นี้</div>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
 
@@ -149,7 +150,7 @@
                             <p class="sub-text">ยังไม่มีการ์ดวางขายในตลาด</p>
                         </div>
                         <div v-for="item in filteredMarketplace" :key="item.listing_id" class="market-item">
-                            <img loading="lazy" :src="getDriveImageUrl(getCardById(item.card_id).image_drive_id)" :alt="getCardById(item.card_id).name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
+                            <img loading="lazy" :src="getDriveImageUrl(getCardById(item.card_id).image_drive_id)" :alt="getCardById(item.card_id).name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasom'">
                             <div class="market-details">
                                 <div class="market-title">{{ getCardById(item.card_id).name }}</div>
                                 <div class="market-sub">
@@ -213,7 +214,7 @@
                             <p class="sub-text">ยังไม่มีประวัติการสุ่ม</p>
                         </div>
                         <div v-for="(history, index) in gachaHistory" :key="index" class="market-item">
-                            <img loading="lazy" :src="getDriveImageUrl(history.image_drive_id)" onerror="this.src='https://placehold.co/200x280/151a23/00ff87?text=Sasam'">
+                            <img loading="lazy" :src="getDriveImageUrl(history.image_drive_id)" onerror="this.src='https://placehold.co/200x280/151a23/00ff87?text=Sasom'">
                             <div class="market-details">
                                 <div class="market-title">{{ history.name }}</div>
                                 <div class="market-sub">
@@ -328,7 +329,7 @@
                         <div v-for="card in filteredCards()" :key="card.card_id"
                              :class="['card-item', hasCard(card.card_id) ? 'unlocked' : 'locked']"
                              @click="openCardModal(card)">
-                            <img loading="lazy" :src="getDriveImageUrl(card.image_drive_id)" :alt="card.name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
+                            <img loading="lazy" :src="getDriveImageUrl(card.image_drive_id)" :alt="card.name" onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasom'">
                             <div class="card-name">{{ card.name }}</div>
                             <div class="card-id">#{{ card.card_id }}</div>
                         </div>
@@ -471,7 +472,7 @@
                 </div>
                 <img loading="lazy" :src="getDriveImageUrl(selectedCardModal.image_drive_id)"
                      :class="['modal-card-img', { 'locked-img': !hasCard(selectedCardModal.card_id) }]"
-                     onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
+                     onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasom'">
                 <h3 style="font-size:18px;">{{ selectedCardModal.name }}</h3>
                 <p v-if="modalMessage" class="sub-text" style="margin-top:4px; color: var(--accent-green); font-weight:600;" v-html="modalMessage"></p>
                 <p v-else class="sub-text" style="margin-top:4px;">"{{ selectedCardModal.slogan }}"</p>
@@ -518,10 +519,10 @@
         <div :class="['modal-overlay', { active: showNewsModal }]" @click.self="showNewsModal = false">
             <div class="modal-box" v-if="showNewsModal" style="max-height: 80vh; overflow-y: auto; text-align: left;">
                 <button class="close-modal" @click="showNewsModal = false">✕</button>
-                <h3 style="font-size:18px; margin-bottom: 10px;">Sasam beta v0.1 พร้อมให้ทดลองใช้งานแล้ว 🎉</h3>
+                <h3 style="font-size:18px; margin-bottom: 10px;">Sasom beta v0.1 พร้อมให้ทดลองใช้งานแล้ว 🎉</h3>
                 
                 <h4 style="margin-top:15px; margin-bottom: 5px;">ภาพรวม</h4>
-                <p class="sub-text" style="line-height: 1.5;">ยินดีต้อนรับสู่ Sasam v0.1! เวอร์ชันแรกของแพลตฟอร์มสะสมการ์ดออนไลน์ ที่ให้คุณได้สนุกกับการสะสม สุ่มการ์ด แลกเปลี่ยนในตลาด และติดตามความคืบหน้าคอลเลกชันของคุณได้อย่างง่ายดาย</p>
+                <p class="sub-text" style="line-height: 1.5;">ยินดีต้อนรับสู่ Sasom v0.1! เวอร์ชันแรกของแพลตฟอร์มสะสมการ์ดออนไลน์ ที่ให้คุณได้สนุกกับการสะสม สุ่มการ์ด แลกเปลี่ยนในตลาด และติดตามความคืบหน้าคอลเลกชันของคุณได้อย่างง่ายดาย</p>
 
                 <h4 style="margin-top:15px; margin-bottom: 5px;">✨ มีอะไรใหม่บ้าง? (New Features)</h4>
                 <ul class="sub-text" style="line-height: 1.6; padding-left: 20px; margin-top: 5px;">
