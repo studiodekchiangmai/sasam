@@ -11,8 +11,8 @@ createApp({
         }
     },
     async mounted() {
-        // If already logged in locally, redirect to main app
-        if (localStorage.getItem('sasam_user')) {
+        // If already logged in locally and has token, redirect to main app
+        if (localStorage.getItem('sasam_user') && localStorage.getItem('sasam_token')) {
             window.location.href = 'index.html';
             return;
         }
@@ -54,11 +54,14 @@ createApp({
                 const userId = profile.userId;
                 const displayName = profile.displayName;
 
-                // Register/Fetch user from GAS Google Sheets
+                // Register/Fetch user from GAS Google Sheets and get Token
                 let userData = { user_id: userId, display_name: displayName, coins: 500 };
-                const res = await this.apiCall('getUserData', { userId: userId, displayName: displayName });
+                const res = await this.apiCall('authLogin', { userId: userId, displayName: displayName });
                 if (res && res.user) {
                     userData = res.user;
+                }
+                if (res && res.token) {
+                    localStorage.setItem('sasam_token', res.token);
                 }
 
                 localStorage.setItem('sasam_user', JSON.stringify(userData));
@@ -87,11 +90,14 @@ createApp({
             
             this.loading = true;
 
-            // Connect to GAS Google Sheets to fetch/register user
+            // Connect to GAS Google Sheets to fetch/register user and get token
             let userData = { user_id: username, display_name: username, coins: 500 };
-            const res = await this.apiCall('getUserData', { userId: username, displayName: username });
+            const res = await this.apiCall('authLogin', { userId: username, displayName: username });
             if (res && res.user) {
                 userData = res.user;
+            }
+            if (res && res.token) {
+                localStorage.setItem('sasam_token', res.token);
             }
             
             localStorage.setItem('sasam_user', JSON.stringify(userData));
@@ -104,6 +110,7 @@ createApp({
                 display_name: 'ผู้ทดสอบระบบ',
                 coins: 9999
             };
+            localStorage.setItem('sasam_token', 'mock_token_12345');
             localStorage.setItem('sasam_user', JSON.stringify(testUser));
             window.location.href = 'index.html';
         }

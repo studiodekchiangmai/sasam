@@ -48,7 +48,8 @@ createApp({
     },
     async mounted() {
         const savedUser = localStorage.getItem('sasam_user');
-        if (!savedUser) {
+        const token = localStorage.getItem('sasam_token');
+        if (!savedUser || !token) {
             window.location.href = 'login.html';
             return;
         }
@@ -110,6 +111,7 @@ createApp({
         logout() {
             if (!confirm('ต้องการออกจากระบบหรือไม่?')) return;
             localStorage.removeItem('sasam_user');
+            localStorage.removeItem('sasam_token');
             if (typeof liff !== 'undefined' && LIFF_ID !== "YOUR_LIFF_ID_HERE" && liff.isLoggedIn()) {
                 liff.logout();
             }
@@ -121,6 +123,10 @@ createApp({
             if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
                 console.warn("API_URL is not set. Using mock behavior.");
                 return null;
+            }
+            const token = localStorage.getItem('sasam_token');
+            if (token) {
+                payload.token = token;
             }
             try {
                 const response = await fetch(API_URL, {
@@ -158,13 +164,13 @@ createApp({
 
             // 2. Fetch User & Inventory
             if (this.user) {
-                const userRes = await this.apiCall('getUserData', { userId: this.user.user_id, displayName: this.user.display_name });
+                const userRes = await this.apiCall('getUserData');
                 if (userRes && userRes.user) {
                     this.user = userRes.user;
                     localStorage.setItem('sasam_user', JSON.stringify(this.user));
                 }
 
-                const invRes = await this.apiCall('getUserInventory', { userId: this.user.user_id });
+                const invRes = await this.apiCall('getUserInventory');
                 if (invRes && invRes.inventory) this.inventory = invRes.inventory;
             }
 
@@ -210,7 +216,7 @@ createApp({
             }
             this.loading = true;
             this.gachaResult = null;
-            const res = await this.apiCall('gachaSpin', { userId: this.user.user_id, collectionId: this.selectedCollectionForGacha });
+            const res = await this.apiCall('gachaSpin', { collectionId: this.selectedCollectionForGacha });
             if (res && res.status === 'success') {
                 this.gachaResult = res.obtained;
                 this.user.coins = res.coins;
@@ -224,46 +230,14 @@ createApp({
             this.loading = false;
         },
 
-        // GPS Check-in
-        async mockGPSCheckIn() {
-            if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
-                alert("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้");
-                return;
-            }
-            this.loading = true;
-            const res = await this.apiCall('checkInGPS', { userId: this.user.user_id, cardId: 'TH-50', lat: 18.788, lng: 98.985 });
-            if (res && res.status === 'success') {
-                alert(res.message);
-                await this.fetchData();
-            }
-            this.loading = false;
-        },
 
-        // Quiz
-        async playQuiz() {
-            if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
-                alert("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้");
-                return;
-            }
-            const ans = confirm("ทายปัญหา: ดอยอินทนนท์ อยู่จังหวัดอะไร?\nกด OK = เชียงใหม่, Cancel = กรุงเทพ");
-            this.loading = true;
-            const res = await this.apiCall('submitQuiz', { userId: this.user.user_id, isCorrect: ans });
-            if (res && res.status === 'success') {
-                alert(res.message);
-                if (res.coins) {
-                    this.user.coins = res.coins;
-                    localStorage.setItem('sasam_user', JSON.stringify(this.user));
-                }
-            }
-            this.loading = false;
-        },
 
         // Marketplace
         async sellItem() {
             if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") return alert("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้");
             if (!this.sellSelectedInv || !this.sellPrice) return alert("กรุณาเลือกการ์ดและราคา");
             this.loading = true;
-            const res = await this.apiCall('sellMarketplace', { userId: this.user.user_id, inventoryId: this.sellSelectedInv, price: parseInt(this.sellPrice) });
+            const res = await this.apiCall('sellMarketplace', { inventoryId: this.sellSelectedInv, price: parseInt(this.sellPrice) });
             if (res && res.status === 'success') {
                 alert(res.message);
                 this.sellSelectedInv = "";
@@ -275,7 +249,7 @@ createApp({
             if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") return alert("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้");
             if (!confirm(`ยืนยันการซื้อ ${this.getCardById(item.card_id).name} ในราคา ${item.price_coins} เหรียญ?`)) return;
             this.loading = true;
-            const res = await this.apiCall('buyMarketplace', { userId: this.user.user_id, listingId: item.listing_id });
+            const res = await this.apiCall('buyMarketplace', { listingId: item.listing_id });
             if (res && res.status === 'success') {
                 alert(res.message);
                 await this.fetchData();
