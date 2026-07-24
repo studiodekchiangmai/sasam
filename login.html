@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>สะสม (Sasam) - เข้าสู่ระบบ</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
@@ -17,7 +18,7 @@
 
         <div class="login-container">
             <div class="login-box">
-                <h1>🎴 <span class="accent">สะสม</span></h1>
+                <h1><i class="fa-solid fa-layer-group"></i> <span class="accent">สะสม</span></h1>
                 <p class="tagline">แพลตฟอร์มสะสมการ์ดออนไลน์</p>
 
                 <button @click="loginWithLINE" class="login-line-btn">
@@ -37,7 +38,7 @@
                 <button @click="loginManually" class="login-submit-btn">
                     เข้าใช้งาน / สมัครสมาชิก
                 </button>
-                <a href="#" @click.prevent="loginAsTest" class="test-login-link">🧪 เข้าทดสอบระบบ</a>
+                <a href="#" @click.prevent="loginAsTest" class="test-login-link"><i class="fa-solid fa-flask"></i> เข้าทดสอบระบบ</a>
             </div>
         </div>
     </div>

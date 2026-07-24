@@ -196,7 +196,7 @@ createApp({
                 this.gachaResult = res.obtained;
                 this.user.coins = res.coins;
                 localStorage.setItem('sasam_user', JSON.stringify(this.user));
-                this.modalMessage = '🎉 ยินดีด้วย! คุณได้รับการ์ดใหม่!';
+                this.modalMessage = '<i class="fa-solid fa-gift"></i> ยินดีด้วย! คุณได้รับการ์ดใหม่!';
                 this.selectedCardModal = res.obtained;
                 await this.fetchData();
             } else if (res) {
@@ -254,7 +254,7 @@ createApp({
         },
         async buyMarket(item) {
             if (API_URL === "YOUR_GAS_WEB_APP_URL_HERE") return alert("โปรดตั้งค่า API_URL เพื่อใช้งานฟีเจอร์นี้");
-            if (!confirm(`ยืนยันการซื้อ ${this.getCardById(item.card_id).name} ในราคา ${item.price_coins} 🪙?`)) return;
+            if (!confirm(`ยืนยันการซื้อ ${this.getCardById(item.card_id).name} ในราคา ${item.price_coins} เหรียญ?`)) return;
             this.loading = true;
             const res = await this.apiCall('buyMarketplace', { userId: this.user.user_id, listingId: item.listing_id });
             if (res && res.status === 'success') {
@@ -274,9 +274,9 @@ createApp({
                 this.user = { user_id: 'guest123', display_name: 'Guest Tester', coins: 1000 };
             }
             this.collections = [
-                { collection_id: '77THCC', collection_name: '77 จังหวัดประเทศไทย', description: 'สะสมการ์ดจังหวัดประจำประเทศไทย', icon: '🇹🇭', total_cards: 77 },
-                { collection_id: '711FOOD', collection_name: 'ของกิน 7-11', description: 'ของกินยอดฮิตในร้านสะดวกซื้อ', icon: '🍱', total_cards: 50 },
-                { collection_id: '90S', collection_name: 'ไอเทมยุค 90s', description: 'ของเล่นและขนมในความทรงจำ', icon: '🎮', total_cards: 30 }
+                { collection_id: '77THCC', collection_name: '77 จังหวัดประเทศไทย', description: 'สะสมการ์ดจังหวัดประจำประเทศไทย', icon: 'fa-solid fa-flag', total_cards: 77 },
+                { collection_id: '711FOOD', collection_name: 'ของกิน 7-11', description: 'ของกินยอดฮิตในร้านสะดวกซื้อ', icon: 'fa-solid fa-bowl-food', total_cards: 50 },
+                { collection_id: '90S', collection_name: 'ไอเทมยุค 90s', description: 'ของเล่นและขนมในความทรงจำ', icon: 'fa-solid fa-gamepad', total_cards: 30 }
             ];
             this.cards = [
                 { collection_id: '77THCC', card_id: '77THCC-01', name: 'กรุงเทพมหานคร', category_tag: 'Central', rarity: 'Rare', slogan: 'กรุงเทพฯ ดุจเทพสร้าง...', stat_1_label: 'ท่องเที่ยว', stat_1_val: 95, stat_2_label: 'วัฒนธรรม', stat_2_val: 90, link_url: '#', image_drive_id: '1A2B3C4D5E6F7G8H9I' },

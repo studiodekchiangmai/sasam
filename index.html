@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>สะสม (Sasam) - แพลตฟอร์มสะสมการ์ด</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
@@ -19,14 +20,14 @@
             <!-- Top Header Bar -->
             <div class="top-header">
                 <div class="brand-logo">
-                    🎴 <span class="accent">สะสม</span>
+                    <i class="fa-solid fa-layer-group"></i> <span class="accent">สะสม</span>
                 </div>
                 <div class="header-actions">
                     <div class="balance-badge">
-                        🪙 <span>{{ user ? (user.coins || 0) : 0 }}</span>
+                        <i class="fa-solid fa-coins" style="color: gold;"></i> <span>{{ user ? (user.coins || 0) : 0 }}</span>
                     </div>
                     <img v-if="profilePic" :src="profilePic" class="user-avatar" @click="logout" title="ออกจากระบบ">
-                    <div v-else class="user-avatar-placeholder" @click="logout" title="ออกจากระบบ">👤</div>
+                    <div v-else class="user-avatar-placeholder" @click="logout" title="ออกจากระบบ"><i class="fa-solid fa-user"></i></div>
                 </div>
             </div>
 
@@ -40,17 +41,17 @@
                         <span class="sub-text">{{ inventory.length }}/{{ cards.length }} การ์ด</span>
                     </div>
 
-                    <div class="category-card" @click="openAlbum('', '🗺️ การ์ดทั้งหมดในระบบ')">
+                    <div class="category-card" @click="openAlbum('', 'fa-solid fa-map', 'การ์ดทั้งหมดในระบบ')">
                         <div class="category-info">
-                            <h3>🗺️ การ์ดทั้งหมด (All Cards)</h3>
+                            <h3><i class="fa-solid fa-map"></i> การ์ดทั้งหมด (All Cards)</h3>
                             <p>คอลเลกชันการ์ดทั้งหมดในระบบสะสม</p>
                         </div>
                         <div class="category-badge">{{ countByCollection('') }}</div>
                     </div>
 
-                    <div v-for="col in collections" :key="col.collection_id" class="category-card" @click="openAlbum(col.collection_id, col.icon + ' ' + col.collection_name)">
+                    <div v-for="col in collections" :key="col.collection_id" class="category-card" @click="openAlbum(col.collection_id, col.icon, col.collection_name)">
                         <div class="category-info">
-                            <h3>{{ col.icon }} {{ col.collection_name }}</h3>
+                            <h3><i :class="col.icon"></i> {{ col.collection_name }}</h3>
                             <p>{{ col.description }}</p>
                         </div>
                         <div class="category-badge">{{ countByCollection(col.collection_id) }}</div>
@@ -62,7 +63,7 @@
                     <div class="album-header">
                         <button class="back-btn" @click="currentView = 'hub'">←</button>
                         <div>
-                            <h2 style="font-size:18px;">{{ albumTitle }}</h2>
+                            <h2 style="font-size:18px;"><i v-if="albumIcon" :class="albumIcon"></i> {{ albumTitle }}</h2>
                             <p class="sub-text">{{ countByCollection(selectedCollection) }} การ์ดครอบครอง</p>
                         </div>
                     </div>
@@ -80,10 +81,10 @@
                 <!-- 3. MARKET LIVE -->
                 <div :class="['view-section', { active: currentView === 'market' }]">
                     <div class="section-title">
-                        Market Live 🔴
+                        Market Live <i class="fa-solid fa-circle" style="color: red; font-size: 14px; vertical-align: middle;"></i>
                         <span class="sub-text">ซื้อขายแลกเปลี่ยนการ์ด</span>
                     </div>
-                    <input type="text" class="market-search" v-model="marketSearch" placeholder="🔍 ค้นหาชื่อการ์ด...">
+                    <input type="text" class="market-search" v-model="marketSearch" placeholder="ค้นหาชื่อการ์ด...">
 
                     <div class="market-list">
                         <div v-if="filteredMarketplace.length === 0" style="text-align:center; padding:30px 0;">
@@ -99,7 +100,7 @@
                                 </div>
                             </div>
                             <div class="market-price">
-                                <div class="price-text">🪙 {{ item.price_coins }}</div>
+                                <div class="price-text"><i class="fa-solid fa-coins" style="color: gold;"></i> {{ item.price_coins }}</div>
                                 <button v-if="user && item.seller_id !== user.user_id" class="buy-btn" @click="buyMarket(item)">ซื้อเลย</button>
                                 <span v-else class="sub-text" style="font-size:11px;">ของคุณ</span>
                             </div>
@@ -122,35 +123,35 @@
 
                 <!-- 4. GACHA DRAWING -->
                 <div :class="['view-section', { active: currentView === 'gacha' }]">
-                    <div class="section-title">สุ่มซองการ์ดประจำวัน 🎲</div>
+                    <div class="section-title">สุ่มซองการ์ดประจำวัน <i class="fa-solid fa-dice"></i></div>
                     <div class="gacha-container">
-                        <p class="sub-text">เลือกคอลเลกชันเพื่อสุ่มการ์ด (50 🪙)</p>
+                        <p class="sub-text">เลือกคอลเลกชันเพื่อสุ่มการ์ด (50 <i class="fa-solid fa-coins" style="color: gold;"></i>)</p>
                         
                         <div style="margin: 15px 0;">
                             <select v-model="selectedCollectionForGacha" class="gacha-select" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-dark); color: white; font-size: 16px;">
-                                <option v-for="col in collections" :value="col.collection_id">{{ col.icon }} {{ col.collection_name }}</option>
+                                <option v-for="col in collections" :value="col.collection_id">{{ col.collection_name }}</option>
                             </select>
                         </div>
 
                         <div class="pack-box" @click="spinGacha">
-                            <div style="font-size: 50px; margin-bottom: 10px;">📦</div>
+                            <div style="font-size: 50px; margin-bottom: 10px;"><i class="fa-solid fa-box-open"></i></div>
                             <div style="font-weight: 700; font-size: 16px;">สุ่มการ์ด 1 ใบ</div>
-                            <div style="font-size: 12px; color: var(--accent-green); margin-top: 5px;">50 🪙 / ซอง</div>
+                            <div style="font-size: 12px; color: var(--accent-green); margin-top: 5px;"><i class="fa-solid fa-coins"></i> 50 / ซอง</div>
                         </div>
                         <button class="draw-btn-main" @click="spinGacha" :disabled="loading || (user && user.coins < 50)">
-                            🎲 สุ่มการ์ด (50 เหรียญ)
+                            <i class="fa-solid fa-dice"></i> สุ่มการ์ด (50 เหรียญ)
                         </button>
 
                         <div class="gacha-actions">
                             <button class="gacha-side-btn" @click="mockGPSCheckIn">
-                                <span class="icon">📍</span>
+                                <span class="icon"><i class="fa-solid fa-location-dot"></i></span>
                                 <span class="label">Check-in GPS</span>
                                 <span class="desc">จำลองรับการ์ดเชียงใหม่</span>
                             </button>
                             <button class="gacha-side-btn" @click="playQuiz">
-                                <span class="icon">🧠</span>
+                                <span class="icon"><i class="fa-solid fa-brain"></i></span>
                                 <span class="label">ทายปัญหา</span>
-                                <span class="desc">ตอบถูก +20 🪙</span>
+                                <span class="desc">ตอบถูก +20 <i class="fa-solid fa-coins" style="color: gold;"></i></span>
                             </button>
                         </div>
                     </div>
@@ -181,7 +182,7 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">เหรียญคงเหลือ</div>
-                        <div class="stat-value">🪙 {{ user ? user.coins : 0 }}</div>
+                        <div class="stat-value"><i class="fa-solid fa-coins" style="color: gold;"></i> {{ user ? user.coins : 0 }}</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">ชื่อผู้เล่น</div>
@@ -194,20 +195,20 @@
             <!-- Bottom Navigation Bar -->
             <div class="bottom-nav">
                 <button :class="['nav-item', { active: activeNav === 'hub' }]" @click="switchNav('hub')">
-                    <span class="icon">🖼️</span>
+                    <span class="icon"><i class="fa-solid fa-images"></i></span>
                     <span>คอลเลกชัน</span>
                 </button>
                 <button :class="['nav-item', { active: activeNav === 'market' }]" @click="switchNav('market')">
-                    <span class="icon">🛒</span>
+                    <span class="icon"><i class="fa-solid fa-cart-shopping"></i></span>
                     <span>ตลาด Live</span>
                 </button>
-                <div class="nav-center-btn" @click="switchNav('gacha')">🎲</div>
+                <div class="nav-center-btn" @click="switchNav('gacha')"><i class="fa-solid fa-dice"></i></div>
                 <button :class="['nav-item', { active: activeNav === 'gacha' }]" @click="switchNav('gacha')">
-                    <span class="icon">🎁</span>
+                    <span class="icon"><i class="fa-solid fa-gift"></i></span>
                     <span>สุ่มการ์ด</span>
                 </button>
                 <button :class="['nav-item', { active: activeNav === 'stats' }]" @click="switchNav('stats')">
-                    <span class="icon">📊</span>
+                    <span class="icon"><i class="fa-solid fa-chart-pie"></i></span>
                     <span>พอร์ต</span>
                 </button>
             </div>
@@ -224,7 +225,7 @@
                      :class="['modal-card-img', { 'locked-img': !hasCard(selectedCardModal.card_id) }]"
                      onerror="this.src='https://via.placeholder.com/200x280/151a23/00ff87?text=Sasam'">
                 <h3 style="font-size:18px;">{{ selectedCardModal.name }}</h3>
-                <p v-if="modalMessage" class="sub-text" style="margin-top:4px; color: var(--accent-green); font-weight:600;">{{ modalMessage }}</p>
+                <p v-if="modalMessage" class="sub-text" style="margin-top:4px; color: var(--accent-green); font-weight:600;" v-html="modalMessage"></p>
                 <p v-else class="sub-text" style="margin-top:4px;">"{{ selectedCardModal.slogan }}"</p>
 
                 <div v-if="hasCard(selectedCardModal.card_id)" class="modal-stats">
@@ -238,7 +239,7 @@
                     </div>
                 </div>
                 <div v-else style="margin-top:12px;">
-                    <p class="sub-text">🔒 คุณยังไม่มีการ์ดใบนี้</p>
+                    <p class="sub-text"><i class="fa-solid fa-lock"></i> คุณยังไม่มีการ์ดใบนี้</p>
                 </div>
 
                 <a v-if="hasCard(selectedCardModal.card_id) && selectedCardModal.link_url && selectedCardModal.link_url !== '#'"
